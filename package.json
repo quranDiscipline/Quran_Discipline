@@ -1,0 +1,20 @@
+{
+  "name": "quran-discipline-academy",
+  "version": "1.0.0",
+  "description": "Quran Discipline Academy — Multi-Portal SaaS Web Application",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "backend": "cd backend && npm run start:dev",
+    "frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "test": "npm run test --ws",
+    "build": "npm run build --ws"
+  },
+  "keywords": ["quran", "academy", "education", "islamic"],
+  "author": "Quran Discipline Academy",
+  "license": "UNLICENSED"
+}

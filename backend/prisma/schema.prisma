@@ -1,0 +1,491 @@
+// ─── Prisma Schema — Quran Discipline Academy ──────────────────────────────
+// Complete schema with all 16 models for Phase 1
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  admin
+  teacher
+  student
+}
+
+enum Sex {
+  male
+  female
+}
+
+enum SubscriptionStatus {
+  trial
+  active
+  paused
+  cancelled
+}
+
+enum SessionStatus {
+  scheduled
+  completed
+  cancelled
+  missed
+}
+
+enum EnrollmentStatus {
+  active
+  completed
+  paused
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+}
+
+enum ProfileChangeStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PackageType {
+  foundation
+  mastery
+  advanced
+  group_basic
+  group_premium
+}
+
+enum CourseType {
+  memorization
+  islamic_studies
+  understanding
+}
+
+enum StudentLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+enum DayOfWeek {
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+  saturday
+  sunday
+}
+
+enum MetricType {
+  surah_memorized
+  juz_completed
+  tajweed_rules
+  lessons_completed
+}
+
+enum LandingSection {
+  hero
+  programs
+  testimonials
+  teachers
+  faq
+  trust_bar
+}
+
+enum ChangeType {
+  bio
+  qualifications
+  specializations
+  photo
+  multiple
+}
+
+enum PaymentMethod {
+  paypal
+  bank_transfer
+}
+
+enum SessionType {
+  one_on_one
+  group
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  passwordHash     String
+  fullName         String
+  sex              Sex
+  role             UserRole
+  phoneNumber      String?
+  whatsappNumber   String?
+  country          String?
+  profilePictureUrl String?
+  isActive         Boolean   @default(true)
+  emailVerified    Boolean   @default(false)
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  teacher          Teacher?
+  student          Student?
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Teacher {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sex             Sex
+  bio             String?
+  qualifications  Json     @default("[]")
+  specializations Json     @default("[]")
+  hourlyRate      Decimal? @db.Decimal(10, 2)
+  totalStudents   Int      @default(0)
+  rating          Decimal  @default(0) @db.Decimal(3, 2)
+  isAvailable     Boolean  @default(true)
+  pendingChanges  Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  schedules        TeacherSchedule[]
+  enrollments      Enrollment[]
+  sessions         Session[]
+  assessments      Assessment[]
+  profileChanges   TeacherProfileChange[]
+  assignedBookings BookingRequest[]       @relation("AssignedTeacher")
+  reviewedChanges  TeacherProfileChange[] @relation("ReviewingAdmin")
+
+  @@index([userId])
+}
+
+model Student {
+  id                     String              @id @default(uuid())
+  userId                 String              @unique
+  user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sex                    Sex
+  currentLevel           StudentLevel
+  enrolledDate           DateTime            @default(now())
+  subscriptionStatus     SubscriptionStatus  @default(trial)
+  paymentMethod          PaymentMethod?
+  nextPaymentDate        DateTime?
+  totalSessionsCompleted Int                 @default(0)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  // Relations
+  enrollments          Enrollment[]
+  sessions              Session[]
+  submissions          AssessmentSubmission[]
+  progress             ProgressTracking[]
+  payments             Payment[]
+  certificates         Certificate[]
+
+  @@index([userId])
+}
+
+model Course {
+  id                String     @id @default(uuid())
+  title             String
+  description       String
+  courseType        CourseType
+  durationMonths    Int
+  priceMonthly      Decimal    @db.Decimal(10, 2)
+  maxStudentsPerGroup Int?
+  isActive          Boolean    @default(true)
+  createdById       String
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  enrollments       Enrollment[]
+  assessments       Assessment[]
+  progress          ProgressTracking[]
+  certificates      Certificate[]
+  landingContent    LandingPageContent[]
+
+  @@index([isActive])
+}
+
+model Enrollment {
+  id                 String           @id @default(uuid())
+  studentId          String
+  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId           String
+  course             Course           @relation(fields: [courseId], references: [id])
+  teacherId          String
+  teacher            Teacher          @relation(fields: [teacherId], references: [id])
+  packageType        PackageType
+  startDate          DateTime
+  endDate            DateTime
+  status             EnrollmentStatus @default(active)
+  progressPercentage Decimal          @default(0) @db.Decimal(5, 2)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  // Relations
+  sessions            Session[]
+  progress            ProgressTracking[]
+  submissions         AssessmentSubmission[]
+  payments            Payment[]
+  certificates        Certificate[]
+
+  @@unique([studentId, courseId, teacherId])
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([status])
+}
+
+model TeacherSchedule {
+  id          String    @id @default(uuid())
+  teacherId   String
+  teacher     Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  dayOfWeek   DayOfWeek
+  startTime   String    // HH:MM format
+  endTime     String    // HH:MM format
+  isAvailable Boolean   @default(true)
+  maxStudents Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([teacherId, dayOfWeek])
+}
+
+model Session {
+  id              String        @id @default(uuid())
+  enrollmentId    String
+  enrollment      Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  teacherId       String
+  teacher         Teacher       @relation(fields: [teacherId], references: [id])
+  studentId       String
+  student         Student       @relation(fields: [studentId], references: [id])
+  scheduledAt     DateTime
+  durationMinutes Int           @default(60)
+  sessionType     SessionType   @default(one_on_one)
+  zoomLink        String?
+  recordingUrl    String?
+  status          SessionStatus @default(scheduled)
+  homeworkAssigned String?
+  teacherNotes    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([teacherId])
+  @@index([studentId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model ProgressTracking {
+  id           String     @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId     String
+  course       Course     @relation(fields: [courseId], references: [id])
+  metricType   MetricType
+  metricValue  Json
+  completedAt  DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+
+  @@index([studentId, courseId])
+  @@index([enrollmentId])
+}
+
+model Assessment {
+  id           String   @id @default(uuid())
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacherId    String
+  teacher      Teacher  @relation(fields: [teacherId], references: [id])
+  title        String
+  description  String?
+  questions    Json
+  totalMarks   Int
+  passingMarks Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  submissions  AssessmentSubmission[]
+
+  @@index([courseId])
+  @@index([teacherId])
+}
+
+model AssessmentSubmission {
+  id           String   @id @default(uuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  answers      Json
+  marksObtained Int?
+  feedback     String?
+  status       String   @default("pending")
+  submittedAt  DateTime @default(now())
+  reviewedAt   DateTime?
+  reviewedById String?
+
+  @@unique([assessmentId, studentId])
+  @@index([assessmentId, studentId])
+  @@index([studentId])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  studentId     String
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  enrollmentId  String
+  enrollment    Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String        @default("USD")
+  paymentMethod PaymentMethod
+  transactionId String?
+  paymentDate   DateTime
+  status        PaymentStatus @default(pending)
+  receiptUrl    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+  @@index([paymentDate])
+}
+
+model BookingRequest {
+  id                  String       @id @default(uuid())
+  fullName            String
+  email               String
+  whatsappNumber      String
+  sex                 Sex
+  country             String
+  currentLevel        String
+  preferredPackage    String
+  preferredTeacherSex String?
+  message             String?
+  preferredDate       DateTime?
+  preferredTime       String?
+  assignedToId        String?
+  assignedTo          Teacher?     @relation("AssignedTeacher", fields: [assignedToId], references: [id])
+  status              BookingStatus @default(pending)
+  zoomLink            String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+model TeacherProfileChange {
+  id               String              @id @default(uuid())
+  teacherId        String
+  teacher          Teacher             @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  requestedChanges Json
+  changeType       ChangeType
+  reason           String
+  status           ProfileChangeStatus @default(pending)
+  requestedAt      DateTime            @default(now())
+  reviewedAt       DateTime?
+  reviewedById     String?
+  reviewedBy       Teacher?            @relation("ReviewingAdmin", fields: [reviewedById], references: [id])
+  adminNotes       String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([teacherId, status])
+}
+
+model Conversation {
+  id             String   @id @default(uuid())
+  participant1Id String
+  participant2Id String
+  lastMessageAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  messages      ChatMessage[]
+
+  @@unique([participant1Id, participant2Id])
+  @@index([participant1Id])
+  @@index([participant2Id])
+}
+
+model ChatMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  receiverId     String
+  messageText    String
+  attachmentUrl  String?
+  isRead         Boolean  @default(false)
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, receiverId])
+}
+
+model Certificate {
+  id                String   @id @default(uuid())
+  studentId         String
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  enrollmentId      String
+  enrollment        Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  courseId          String
+  course            Course   @relation(fields: [courseId], references: [id])
+  certificateUrl    String
+  certificateNumber String   @unique
+  issuedAt          DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  @@index([studentId])
+  @@index([certificateNumber])
+}
+
+model LandingPageContent {
+  id          String         @id @default(uuid())
+  sectionName LandingSection @unique
+  contentJson Json
+  isActive    Boolean        @default(true)
+  updatedById String?
+  courseId    String?
+  course      Course?        @relation(fields: [courseId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([sectionName])
+  @@index([isActive])
+}
