@@ -606,23 +606,357 @@ export class CreateFeatureDto {
 
 ---
 
-## 🧪 Testing Approach
+## 🧪 Testing — MANDATORY AFTER EVERY PROMPT
 
-### Backend (Jest)
-```bash
-npm run test          # Unit tests
-npm run test:e2e      # End-to-end tests
-npm run test:cov      # Coverage report
+> **RULE: After implementing any feature from a prompt, you MUST write unit tests
+> before considering the task done. No exceptions. Tests are not optional.**
+
+---
+
+### The Testing Contract
+
+After every single prompt you complete, you will:
+
+1. **Write tests** for everything you just built
+2. **Run the tests** and confirm they pass (`npm run test`)
+3. **Report the result** — show passing test output before finishing your response
+4. **Fix failures** — if a test fails, fix the code OR the test before moving on
+
+If a prompt adds 1 service method → write tests for that method.
+If a prompt adds 5 endpoints → write tests for all 5.
+There is no such thing as "I'll add tests later."
+
+---
+
+### Backend Testing (NestJS + Jest)
+
+#### Test File Location
+```
+Co-locate tests with source files:
+src/auth/auth.service.ts          → src/auth/auth.service.spec.ts
+src/teachers/teachers.service.ts  → src/teachers/teachers.service.spec.ts
+src/booking/booking.service.ts    → src/booking/booking.service.spec.ts
+
+E2E tests (full HTTP request lifecycle):
+test/auth.e2e-spec.ts
+test/booking.e2e-spec.ts
 ```
 
-### Frontend (Vitest + Testing Library)
+#### Commands
 ```bash
-npm run test          # Unit tests
-npm run test:ui       # UI test runner
+npm run test              # Run all unit tests
+npm run test:watch        # Watch mode during development
+npm run test:cov          # Coverage report (target: 80%+)
+npm run test:e2e          # End-to-end tests
+npm run test -- --testPathPattern=auth   # Run specific module tests
 ```
 
-### Manual API Testing
-Use the Swagger UI at: `http://localhost:3000/api/docs`
+#### Unit Test Template (Service)
+```typescript
+// src/teachers/teachers.service.spec.ts
+
+import { Test, TestingModule } from '@nestjs/testing';
+import { TeachersService } from './teachers.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
+
+// ─── Mock PrismaService ─────────────────────────────────────────────────────
+const mockPrismaService = {
+  teacher: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  },
+};
+
+describe('TeachersService', () => {
+  let service: TeachersService;
+  let prisma: typeof mockPrismaService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        TeachersService,
+        { provide: PrismaService, useValue: mockPrismaService },
+      ],
+    }).compile();
+
+    service = module.get<TeachersService>(TeachersService);
+    prisma = module.get(PrismaService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();   // Reset mocks between tests
+  });
+
+  // ─── findById ─────────────────────────────────────────────────────────────
+  describe('findById', () => {
+    it('should return a teacher when found', async () => {
+      const mockTeacher = { id: 'uuid-1', bio: 'Test bio' };
+      prisma.teacher.findUnique.mockResolvedValue(mockTeacher);
+
+      const result = await service.findById('uuid-1');
+
+      expect(result).toEqual(mockTeacher);
+      expect(prisma.teacher.findUnique).toHaveBeenCalledWith({
+        where: { id: 'uuid-1' },
+      });
+    });
+
+    it('should throw NotFoundException when teacher does not exist', async () => {
+      prisma.teacher.findUnique.mockResolvedValue(null);
+
+      await expect(service.findById('nonexistent-id'))
+        .rejects
+        .toThrow(NotFoundException);
+    });
+  });
+});
+```
+
+#### What to Test in Every Service
+```
+✅ Happy path — correct input returns expected output
+✅ Not found — throws NotFoundException with correct message
+✅ Forbidden — throws ForbiddenException when accessing other users' data
+✅ Validation — throws BadRequestException on invalid input
+✅ Edge cases — empty arrays, null values, boundary conditions
+✅ Side effects — correct Prisma methods called with correct args
+✅ Error propagation — database errors are caught and rethrown correctly
+```
+
+#### Controller Test Template
+```typescript
+// src/booking/booking.controller.spec.ts
+
+import { Test, TestingModule } from '@nestjs/testing';
+import { BookingController } from './booking.controller';
+import { BookingService } from './booking.service';
+
+const mockBookingService = {
+  createBookingRequest: jest.fn(),
+  getBookingRequests: jest.fn(),
+};
+
+describe('BookingController', () => {
+  let controller: BookingController;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [BookingController],
+      providers: [{ provide: BookingService, useValue: mockBookingService }],
+    }).compile();
+
+    controller = module.get<BookingController>(BookingController);
+  });
+
+  afterEach(() => jest.clearAllMocks());
+
+  describe('POST /booking-requests', () => {
+    it('should create a booking request and return 201', async () => {
+      const dto = { fullName: 'John Doe', email: 'john@test.com' };
+      const mockResult = { id: 'uuid-1', ...dto, status: 'pending' };
+      mockBookingService.createBookingRequest.mockResolvedValue(mockResult);
+
+      const result = await controller.createBookingRequest(dto as any);
+
+      expect(result).toEqual(mockResult);
+      expect(mockBookingService.createBookingRequest).toHaveBeenCalledWith(dto);
+    });
+  });
+});
+```
+
+---
+
+### Frontend Testing (Vitest + React Testing Library)
+
+#### Test File Location
+```
+Co-locate with components:
+src/features/auth/components/LoginForm/LoginForm.tsx
+→ src/features/auth/components/LoginForm/LoginForm.test.tsx
+
+src/features/booking/hooks/useBookingForm.ts
+→ src/features/booking/hooks/useBookingForm.test.ts
+```
+
+#### Commands
+```bash
+npm run test              # Run all tests
+npm run test:ui           # Visual test runner (Vitest UI)
+npm run test:coverage     # Coverage report
+npm run test -- LoginForm # Run specific component tests
+```
+
+#### Component Test Template
+```typescript
+// src/features/booking/components/BookingForm/BookingForm.test.tsx
+
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
+import { BookingForm } from './BookingForm';
+
+// Mock API service
+vi.mock('../../services/booking.service', () => ({
+  createBookingRequest: vi.fn(),
+}));
+
+describe('BookingForm', () => {
+  it('renders all required fields', () => {
+    render(<BookingForm />);
+
+    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /book/i })).toBeInTheDocument();
+  });
+
+  it('shows validation errors on empty submit', async () => {
+    render(<BookingForm />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: /book/i }));
+
+    expect(await screen.findByText(/full name is required/i)).toBeInTheDocument();
+    expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
+  });
+
+  it('shows error for invalid email format', async () => {
+    render(<BookingForm />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText(/email/i), 'not-an-email');
+    await user.click(screen.getByRole('button', { name: /book/i }));
+
+    expect(await screen.findByText(/invalid email/i)).toBeInTheDocument();
+  });
+
+  it('submits successfully with valid data', async () => {
+    const { createBookingRequest } = await import('../../services/booking.service');
+    (createBookingRequest as ReturnType<typeof vi.fn>).mockResolvedValue({ id: '1' });
+
+    render(<BookingForm />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText(/full name/i), 'John Doe');
+    await user.type(screen.getByLabelText(/email/i), 'john@test.com');
+    await user.click(screen.getByRole('button', { name: /book/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/booking confirmed/i)).toBeInTheDocument();
+    });
+  });
+});
+```
+
+#### What to Test in Every Component
+```
+✅ Renders correctly (snapshot or key elements present)
+✅ Shows validation errors on invalid input
+✅ Shows loading state while API call is in progress
+✅ Shows success state after successful submission
+✅ Shows error state when API call fails
+✅ Calls the correct service function with correct arguments
+✅ Accessibility — elements have correct roles and labels
+```
+
+#### Custom Hook Test Template
+```typescript
+// src/features/auth/hooks/useAuth.test.ts
+
+import { renderHook, act } from '@testing-library/react';
+import { vi } from 'vitest';
+import { useAuth } from './useAuth';
+
+describe('useAuth', () => {
+  it('starts with unauthenticated state', () => {
+    const { result } = renderHook(() => useAuth());
+
+    expect(result.current.user).toBeNull();
+    expect(result.current.isAuthenticated).toBe(false);
+  });
+
+  it('updates state after successful login', async () => {
+    const { result } = renderHook(() => useAuth());
+
+    await act(async () => {
+      await result.current.login({ email: 'test@test.com', password: 'password' });
+    });
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.user).not.toBeNull();
+  });
+});
+```
+
+---
+
+### Coverage Requirements
+
+```
+Backend Services:     ≥ 85% line coverage
+Backend Controllers:  ≥ 80% line coverage
+Frontend Components:  ≥ 75% line coverage
+Frontend Hooks:       ≥ 85% line coverage
+Utility Functions:    ≥ 90% line coverage
+
+Critical paths (MUST be 100% covered):
+  - Auth login / logout / token refresh
+  - Payment processing
+  - Teacher profile change request + approval
+  - Booking request creation
+  - Role-based access control
+```
+
+---
+
+### Test Quality Rules
+
+```
+✅ DO: Test behavior, not implementation details
+✅ DO: Use descriptive test names ("should throw NotFoundException when teacher not found")
+✅ DO: One assertion concept per test (multiple expect() ok if they test same thing)
+✅ DO: Reset mocks in afterEach()
+✅ DO: Use realistic mock data (not foo/bar/test123)
+✅ DO: Test error paths as thoroughly as happy paths
+
+❌ DON'T: Test that React Hook Form calls setEmail (implementation detail)
+❌ DON'T: Write tests that always pass regardless of behavior
+❌ DON'T: Use snapshot tests as primary test strategy
+❌ DON'T: Share state between tests (each test must be independent)
+❌ DON'T: Mock everything — test real logic where possible
+❌ DON'T: Skip testing error handling because "it's unlikely"
+```
+
+---
+
+### Reporting Tests in Responses
+
+After each prompt, your response must end with:
+
+```
+### ✅ Tests Written & Passing
+
+Files created:
+- src/teachers/teachers.service.spec.ts     (12 tests)
+- src/teachers/teachers.controller.spec.ts  ( 8 tests)
+
+Test results:
+PASS  src/teachers/teachers.service.spec.ts
+  TeachersService
+    findById
+      ✓ should return teacher when found (3ms)
+      ✓ should throw NotFoundException when not found (1ms)
+    create
+      ✓ should create teacher with hashed data (5ms)
+      ✓ should throw ConflictException on duplicate email (2ms)
+
+Test Suites: 2 passed, 2 total
+Tests:       20 passed, 20 total
+Coverage:    88.5% statements
+```
 
 ---
 
@@ -656,6 +990,40 @@ npx prisma db seed         # Re-seed
 ---
 
 ## 🚨 Critical Rules — NEVER Break These
+
+### Environment Variables — READ BEFORE ADDING ANYTHING
+**STOP. Before adding any new variable to `.env` or `.env.example`, follow this checklist:**
+
+```
+Step 1: READ the existing .env.example top to bottom
+Step 2: SEARCH for the variable name — does it already exist?
+Step 3: SEARCH for similar variables — is there already a SMTP_HOST, JWT_SECRET, etc.?
+
+Only THEN decide:
+  ├── Variable already exists     → USE the existing one. Do NOT add a duplicate.
+  ├── Similar variable exists     → ASK if it should be reused or if a new one is needed.
+  └── Truly new variable needed   → ADD it with a comment explaining what it's for.
+```
+
+**Forbidden:**
+```
+❌ Adding DATABASE_URL when it already exists (even spelled differently)
+❌ Adding MAIL_HOST when SMTP_HOST already exists
+❌ Adding JWT_SECRET when JWT_ACCESS_SECRET already exists
+❌ Adding ANY variable without checking .env.example first
+❌ Duplicating variables with different names for the same service
+```
+
+**Required format when adding a new variable:**
+```env
+# ─── Service Name ────────────────────────────────────────
+# PURPOSE: What this variable is used for
+# WHERE: Which module/service reads this
+# EXAMPLE: What a real value looks like
+NEW_VARIABLE=example_value
+```
+
+---
 
 ### Code Quality
 1. **NO `any` type** — Use `unknown` + type narrowing if type is genuinely unknown
@@ -868,4 +1236,4 @@ this.logger.debug('Processing booking request', payload);    // Debug (dev only)
 ---
 
 *Last updated: Project initialization*
-*Version: 1.0.0*
+*Version: 1.1.0 — Added mandatory testing contract + .env variable safety rules*
