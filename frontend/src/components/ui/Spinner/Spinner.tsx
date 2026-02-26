@@ -1,9 +1,7 @@
-import React from 'react';
 import { cn } from '../../../lib/utils';
 
 export interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
-  color?: string;
   className?: string;
 }
 
@@ -13,7 +11,7 @@ const sizeStyles = {
   lg: 'w-8 h-8',
 };
 
-export function Spinner({ size = 'md', color, className }: SpinnerProps) {
+export function Spinner({ size = 'md', className }: SpinnerProps) {
   return (
     <svg
       className={cn('animate-spin', sizeStyles[size], className)}

@@ -1,4 +1,4 @@
-import { type ClassValue, clsx } from 'clsx';
+import { type ClassValue } from 'clsx';
 
 // Simple clsx implementation since we don't want to add another dependency yet
 function clsxWrapper(...classes: ClassValue[]): string {

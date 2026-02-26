@@ -10,5 +10,9 @@ export default {
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^uuid$': 'uuid',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!uuid/.*)',
+  ],
 };
