@@ -1,0 +1,8 @@
+export { AdminDashboard } from './AdminDashboard';
+export { TeachersList } from './TeachersList';
+export { StudentsList } from './StudentsList';
+export { CoursesList } from './CoursesList';
+export { EnrollmentsList } from './EnrollmentsList';
+export { BookingRequestsList } from './BookingRequestsList';
+export { ProfileChangesList } from './ProfileChangesList';
+export { PaymentsList } from './PaymentsList';

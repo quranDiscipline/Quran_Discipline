@@ -1,43 +1,39 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { authApi } from '../../services/auth.service';
 import { useAuthStore } from '../../store/auth.store';
-
-// Using native HTML validation for Phase 2 - will add Zod in Phase 3
 
 interface LoginFormProps {
   className?: string;
 }
 
 export function LoginForm({ className = '' }: LoginFormProps) {
-  const { login, isLoading } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('admin@qurandiscipline.academy');
+  const [password, setPassword] = useState('Admin@1234');
 
-  const { register, handleSubmit, formState: { errors } } = useForm<{
-    email: string;
-    password: string;
-  }>({
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-    mode: 'onSubmit',
-  });
-
-  const onSubmit = async (data: { email: string; password: string }) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
+    setIsLoading(true);
+
+    console.log('Submitting login form...', { email });
+
     try {
-      await login(data.email, data.password);
+      const response = await authApi.login({ email, password });
+      console.log('Login successful:', response);
+
+      // Update auth store
+      const store = useAuthStore.getState();
+      store.setUser(response.user);
+      store.setAccessToken(response.accessToken);
 
       // Redirect based on role
-      const state = useAuthStore.getState();
-      const role = state.user?.role;
-
-      switch (role) {
+      switch (response.user.role) {
         case 'admin':
           navigate('/admin/dashboard');
           break;
@@ -51,17 +47,18 @@ export function LoginForm({ className = '' }: LoginFormProps) {
           navigate('/');
       }
     } catch (err: any) {
+      console.error('Login failed:', err);
       const errorMessage =
         err.response?.data?.error?.message ||
-        err.response?.data?.error?.details?.email?.[0] ||
         err.message ||
         'Login failed. Please try again.';
       setError(errorMessage);
+      setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={`space-y-4 ${className}`}>
+    <form onSubmit={handleSubmit} className={`space-y-4 ${className}`}>
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
           {error}
@@ -76,14 +73,13 @@ export function LoginForm({ className = '' }: LoginFormProps) {
           id="email"
           type="email"
           autoComplete="email"
-          {...register('email', { required: true })}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
           className="w-full h-11 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder:text-gray-400 transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 focus:outline-none disabled:opacity-50"
           placeholder="Enter your email"
           disabled={isLoading}
         />
-        {errors.email && (
-          <p className="text-sm text-red-600 mt-1">Please enter a valid email address</p>
-        )}
       </div>
 
       <div>
@@ -95,7 +91,9 @@ export function LoginForm({ className = '' }: LoginFormProps) {
             id="password"
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
-            {...register('password', { required: true })}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
             className="w-full h-11 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder:text-gray-400 transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20 focus:outline-none disabled:opacity-50 pr-10"
             placeholder="Enter your password"
             disabled={isLoading}

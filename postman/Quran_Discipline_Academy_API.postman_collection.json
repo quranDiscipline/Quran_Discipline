@@ -1,18 +1,1000 @@
 {
   "info": {
+    "_postman_id": "7bb10bff-137a-4aab-9ddd-d21a2f8cae99",
     "name": "Quran Discipline Academy API",
-    "description": "API collection for Quran Discipline Academy - Authentication & Users (Phase 2)",
+    "description": "API collection for Quran Discipline Academy - Auth, Users & Admin Portal (Phase 2-3)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "",
+                  "if (jsonData && jsonData.data && jsonData.data.user) {",
+                  "    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+                  "    pm.environment.set(\"tokenExpiry\", \"2024-01-01T00:00:00Z\");",
+                  "    pm.environment.set(\"userId\", jsonData.data.user.id);",
+                  "    pm.environment.set(\"userEmail\", jsonData.data.user.email);",
+                  "    pm.environment.set(\"userRole\", jsonData.data.user.role);",
+                  "    pm.environment.set(\"lastLoginEmail\", jsonData.data.user.email);",
+                  "}",
+                  "",
+                  "pm.test('Response has success: true', () => {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Response has accessToken', () => {",
+                  "    pm.expect(jsonData.data).to.have.property('accessToken');",
+                  "    pm.expect(jsonData.data).to.have.property('user');",
+                  "});",
+                  "",
+                  "pm.test('Response has user data', () => {",
+                  "    pm.expect(jsonData.data.user).to.have.property('id');",
+                  "    pm.expect(jsonData.data.user).to.have.property('email');",
+                  "    pm.expect(jsonData.data.user).to.have.property('role');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@qurandiscipline.academy\",\n  \"password\": \"Admin@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate with email and password. Returns access token (15min expiry) and sets refresh token cookie (7 days)."
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+                  "const jsonData = pm.response.json();",
+                  "pm.test('Response has success: true', () => { pm.expect(jsonData.success).to.be.true; });",
+                  "if (pm.response.code === 200 && jsonData.success === true) {",
+                  "    pm.environment.unset(\"accessToken\");",
+                  "    pm.environment.unset(\"userId\");",
+                  "    pm.environment.unset(\"userEmail\");",
+                  "    pm.environment.unset(\"userRole\");",
+                  "    pm.environment.unset(\"lastLoginEmail\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "" },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout user. Clears access token and removes refresh token cookie."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "" },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh-token"]
+            },
+            "description": "Refresh access token using httpOnly refresh token cookie."
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@qurandiscipline.academy\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            },
+            "description": "Request password reset email. Sends reset token to user's email (valid for 1 hour)."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset-token-here\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
+            },
+            "description": "Reset password using token from email. Token is single-use and expires after 1 hour."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Admin@1234\",\n  \"newPassword\": \"NewPassword@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            },
+            "description": "Change password for authenticated user. Requires current password."
+          }
+        }
+      ],
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "Admin - Teachers",
+      "item": [
+        {
+          "name": "Get All Teachers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "isAvailable", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get paginated list of teachers with optional search and availability filter."
+          }
+        },
+        {
+          "name": "Get Teacher by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers/:teacherId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers", ":teacherId"],
+              "variable": [{ "key": "teacherId", "value": "{{teacherId}}" }]
+            },
+            "description": "Get detailed information about a specific teacher."
+          }
+        },
+        {
+          "name": "Create Teacher",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data) {",
+                  "    pm.environment.set(\"teacherId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teacher@example.com\",\n  \"fullName\": \"Teacher Name\",\n  \"temporaryPassword\": \"Password123!\",\n  \"sex\": \"male\",\n  \"bio\": \"Experienced Quran teacher\",\n  \"qualifications\": [\"Ijazah in Quran\", \"10 years experience\"],\n  \"specializations\": [\"Tajweed\", \"Memorization\"],\n  \"hourlyRate\": 25\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers"]
+            },
+            "description": "Create a new teacher account. User must change password on first login."
+          }
+        },
+        {
+          "name": "Update Teacher",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Updated bio\",\n  \"qualifications\": [\"Ijazah in Quran\", \"15 years experience\"],\n  \"specializations\": [\"Tajweed\", \"Memorization\", \"Islamic Studies\"],\n  \"hourlyRate\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers/:teacherId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers", ":teacherId"],
+              "variable": [{ "key": "teacherId", "value": "{{teacherId}}" }]
+            },
+            "description": "Update teacher profile information."
+          }
+        },
+        {
+          "name": "Deactivate Teacher",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers/:teacherId/deactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers", ":teacherId", "deactivate"],
+              "variable": [{ "key": "teacherId", "value": "{{teacherId}}" }]
+            },
+            "description": "Deactivate a teacher. Blocked if teacher has active enrollments."
+          }
+        },
+        {
+          "name": "Activate Teacher",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers/:teacherId/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers", ":teacherId", "activate"],
+              "variable": [{ "key": "teacherId", "value": "{{teacherId}}" }]
+            },
+            "description": "Reactivate a deactivated teacher."
+          }
+        },
+        {
+          "name": "Get Teachers Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers", "stats"]
+            },
+            "description": "Get teacher statistics: total, active, inactive, by specialization."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Students",
+      "item": [
+        {
+          "name": "Get All Students",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/students?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "students"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "subscriptionStatus", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get paginated list of students with optional search and status filter."
+          }
+        },
+        {
+          "name": "Get Student by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/students/:studentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "students", ":studentId"],
+              "variable": [{ "key": "studentId", "value": "{{studentId}}" }]
+            },
+            "description": "Get detailed information about a specific student."
+          }
+        },
+        {
+          "name": "Create Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data) {",
+                  "    pm.environment.set(\"studentId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@example.com\",\n  \"fullName\": \"Student Name\",\n  \"temporaryPassword\": \"Password123!\",\n  \"sex\": \"male\",\n  \"country\": \"United States\",\n  \"timezone\": \"America/New_York\",\n  \"dateOfBirth\": \"1990-01-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "students"]
+            },
+            "description": "Create a new student account. User must change password on first login."
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Updated Name\",\n  \"country\": \"Canada\",\n  \"timezone\": \"America/Toronto\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/students/:studentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "students", ":studentId"],
+              "variable": [{ "key": "studentId", "value": "{{studentId}}" }]
+            },
+            "description": "Update student profile information."
+          }
+        },
+        {
+          "name": "Deactivate Student",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/students/:studentId/deactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "students", ":studentId", "deactivate"],
+              "variable": [{ "key": "studentId", "value": "{{studentId}}" }]
+            },
+            "description": "Deactivate a student account."
+          }
+        },
+        {
+          "name": "Activate Student",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/students/:studentId/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "students", ":studentId", "activate"],
+              "variable": [{ "key": "studentId", "value": "{{studentId}}" }]
+            },
+            "description": "Reactivate a deactivated student."
+          }
+        },
+        {
+          "name": "Get Students Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/students/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "students", "stats"]
+            },
+            "description": "Get student statistics: total, active, by subscription status, by country."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Courses",
+      "item": [
+        {
+          "name": "Get All Courses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/courses?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "courses"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "courseType", "value": "", "disabled": true },
+                { "key": "isActive", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get paginated list of courses with filters."
+          }
+        },
+        {
+          "name": "Get Course by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/courses/:courseId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "courses", ":courseId"],
+              "variable": [{ "key": "courseId", "value": "{{courseId}}" }]
+            },
+            "description": "Get detailed information about a specific course."
+          }
+        },
+        {
+          "name": "Create Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data) {",
+                  "    pm.environment.set(\"courseId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Quran Memorization Basics\",\n  \"description\": \"Learn the fundamentals of Quran memorization with proper Tajweed\",\n  \"courseType\": \"memorization\",\n  \"basePrice\": 100,\n  \"durationWeeks\": 12,\n  \"imageUrl\": \"https://example.com/image.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "courses"]
+            },
+            "description": "Create a new course. courseType: memorization | islamic_studies | understanding"
+          }
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Course Title\",\n  \"description\": \"Updated description\",\n  \"basePrice\": 120\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/courses/:courseId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "courses", ":courseId"],
+              "variable": [{ "key": "courseId", "value": "{{courseId}}" }]
+            },
+            "description": "Update course information."
+          }
+        },
+        {
+          "name": "Deactivate Course",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/courses/:courseId/deactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "courses", ":courseId", "deactivate"],
+              "variable": [{ "key": "courseId", "value": "{{courseId}}" }]
+            },
+            "description": "Deactivate a course (sets isActive to false)."
+          }
+        },
+        {
+          "name": "Activate Course",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/courses/:courseId/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "courses", ":courseId", "activate"],
+              "variable": [{ "key": "courseId", "value": "{{courseId}}" }]
+            },
+            "description": "Reactivate a deactivated course."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Enrollments",
+      "item": [
+        {
+          "name": "Get All Enrollments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/enrollments?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "enrollments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get paginated list of enrollments with optional status filter. status: active | completed | paused | cancelled"
+          }
+        },
+        {
+          "name": "Get Enrollment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/enrollments/:enrollmentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "enrollments", ":enrollmentId"],
+              "variable": [{ "key": "enrollmentId", "value": "{{enrollmentId}}" }]
+            },
+            "description": "Get detailed information about a specific enrollment."
+          }
+        },
+        {
+          "name": "Create Enrollment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"courseId\": \"{{courseId}}\",\n  \"teacherId\": \"{{teacherId}}\",\n  \"packageType\": \"foundation\",\n  \"startDate\": \"2026-03-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "enrollments"]
+            },
+            "description": "Create a new enrollment. packageType: foundation | mastery | advanced | group_basic | group_premium"
+          }
+        },
+        {
+          "name": "Update Enrollment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/enrollments/:enrollmentId/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "enrollments", ":enrollmentId", "status"],
+              "variable": [{ "key": "enrollmentId", "value": "{{enrollmentId}}" }]
+            },
+            "description": "Update enrollment status. status: active | completed | paused | cancelled"
+          }
+        },
+        {
+          "name": "Update Enrollment Progress",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"progressPercentage\": 50\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/enrollments/:enrollmentId/progress",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "enrollments", ":enrollmentId", "progress"],
+              "variable": [{ "key": "enrollmentId", "value": "{{enrollmentId}}" }]
+            },
+            "description": "Update student progress percentage (0-100)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Booking Requests",
+      "item": [
+        {
+          "name": "Get All Booking Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/booking-requests?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "booking-requests"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get paginated list of booking requests. status: pending | confirmed | completed | cancelled"
+          }
+        },
+        {
+          "name": "Get Booking Request by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/booking-requests/:bookingId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "booking-requests", ":bookingId"],
+              "variable": [{ "key": "bookingId", "value": "{{bookingId}}" }]
+            },
+            "description": "Get detailed information about a specific booking request."
+          }
+        },
+        {
+          "name": "Assign Teacher to Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": \"{{teacherId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/booking-requests/:bookingId/assign",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "booking-requests", ":bookingId", "assign"],
+              "variable": [{ "key": "bookingId", "value": "{{bookingId}}" }]
+            },
+            "description": "Assign a teacher to handle the booking request."
+          }
+        },
+        {
+          "name": "Confirm Booking with Zoom",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"zoomLink\": \"https://zoom.us/j/123456789\",\n  \"confirmedDate\": \"2026-03-01\",\n  \"confirmedTime\": \"14:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/booking-requests/:bookingId/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "booking-requests", ":bookingId", "confirm"],
+              "variable": [{ "key": "bookingId", "value": "{{bookingId}}" }]
+            },
+            "description": "Confirm booking with Zoom link and scheduled time."
+          }
+        },
+        {
+          "name": "Cancel Booking Request",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/booking-requests/:bookingId/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "booking-requests", ":bookingId", "cancel"],
+              "variable": [{ "key": "bookingId", "value": "{{bookingId}}" }]
+            },
+            "description": "Cancel a booking request."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Profile Changes",
+      "item": [
+        {
+          "name": "Get All Profile Change Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teacher-profile-changes?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teacher-profile-changes"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "teacherId", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get paginated list of teacher profile change requests. status: pending | approved | rejected"
+          }
+        },
+        {
+          "name": "Get Profile Change by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teacher-profile-changes/:changeId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teacher-profile-changes", ":changeId"],
+              "variable": [{ "key": "changeId", "value": "{{changeId}}" }]
+            },
+            "description": "Get detailed information about a specific profile change request."
+          }
+        },
+        {
+          "name": "Approve Profile Change",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Approved - All changes verified\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/teacher-profile-changes/:changeId/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teacher-profile-changes", ":changeId", "approve"],
+              "variable": [{ "key": "changeId", "value": "{{changeId}}" }]
+            },
+            "description": "Approve a teacher profile change request. Changes are applied to teacher profile."
+          }
+        },
+        {
+          "name": "Reject Profile Change",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Rejected - Qualifications not verified\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/teacher-profile-changes/:changeId/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teacher-profile-changes", ":changeId", "reject"],
+              "variable": [{ "key": "changeId", "value": "{{changeId}}" }]
+            },
+            "description": "Reject a teacher profile change request. Notes are required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Payments",
+      "item": [
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/payments?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "payments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "paymentMethod", "value": "", "disabled": true },
+                { "key": "startDate", "value": "", "disabled": true },
+                { "key": "endDate", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get paginated list of payments with filters. status: pending | completed | failed | refunded. paymentMethod: paypal | bank_transfer"
+          }
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/payments/:paymentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "payments", ":paymentId"],
+              "variable": [{ "key": "paymentId", "value": "{{paymentId}}" }]
+            },
+            "description": "Get detailed information about a specific payment."
+          }
+        },
+        {
+          "name": "Create Payment (Manual)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data) {",
+                  "    pm.environment.set(\"paymentId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"enrollmentId\": \"{{enrollmentId}}\",\n  \"amount\": 100,\n  \"paymentMethod\": \"bank_transfer\",\n  \"paymentDate\": \"2026-02-26\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "payments"]
+            },
+            "description": "Manually record a payment. paymentMethod: paypal | bank_transfer"
+          }
+        },
+        {
+          "name": "Mark Payment as Verified",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionId\": \"TXN-123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/payments/:paymentId/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "payments", ":paymentId", "verify"],
+              "variable": [{ "key": "paymentId", "value": "{{paymentId}}" }]
+            },
+            "description": "Mark a pending payment as verified. Optionally add transaction ID."
+          }
+        },
+        {
+          "name": "Get Revenue Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/payments/summary/revenue",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "payments", "summary", "revenue"]
+            },
+            "description": "Get revenue summary: total this month/quarter/year, by payment method, by package type."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dashboard", "stats"]
+            },
+            "description": "Get dashboard statistics: active students, teachers, courses, revenue, pending items, enrollment counts by package."
+          }
+        },
+        {
+          "name": "Get Revenue Chart Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard/revenue-chart?months=6",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dashboard", "revenue-chart"],
+              "query": [{ "key": "months", "value": "6" }]
+            },
+            "description": "Get revenue chart data for the last N months."
+          }
+        },
+        {
+          "name": "Get Students by Country",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard/students/by-country",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dashboard", "students", "by-country"]
+            },
+            "description": "Get student count grouped by country."
+          }
+        },
+        {
+          "name": "Get Students by Package",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard/students/by-package",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dashboard", "students", "by-package"]
+            },
+            "description": "Get student count grouped by package type."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public - Booking",
+      "item": [
+        {
+          "name": "Create Booking Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data) {",
+                  "    pm.environment.set(\"bookingId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+1234567890\",\n  \"country\": \"United States\",\n  \"preferredDate\": \"2026-03-01\",\n  \"preferredTime\": \"14:00\",\n  \"sex\": \"male\"\n}"
+claude --resume 4a0a8c4e-aec3-421c-97f5-3b60b6202050            },
+            "url": {
+              "raw": "{{baseUrl}}/booking-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["booking-requests"]
+            },
+            "description": "Public endpoint to create a booking request for a free assessment call."
+          }
+        }
+      ]
+    }
+  ],
   "auth": {
     "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{accessToken}}",
-        "type": "string"
-      }
-    ]
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
   },
   "event": [
     {
@@ -28,7 +1010,6 @@
           "if (token && tokenExpiry && now > parseInt(tokenExpiry)) {",
           "    const baseUrl = pm.environment.get('baseUrl');",
           "    const refreshUrl = baseUrl + '/auth/refresh-token';",
-          "    ",
           "    pm.sendRequest({",
           "        url: refreshUrl,",
           "        method: 'POST',",
@@ -52,566 +1033,6 @@
       "key": "baseUrl",
       "value": "http://localhost:3000/api",
       "type": "string"
-    }
-  ],
-  "item": [
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "pm.test('Response has accessToken', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('accessToken');",
-                  "    pm.expect(jsonData.data).to.have.property('user');",
-                  "});",
-                  "",
-                  "pm.test('Response has user data', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data.user).to.have.property('id');",
-                  "    pm.expect(jsonData.data.user).to.have.property('email');",
-                  "    pm.expect(jsonData.data.user).to.have.property('role');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@qurandiscipline.academy\",\n  \"password\": \"Admin@1234\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
-            },
-            "description": "Authenticate with email and password. Returns access token (15min expiry) and sets refresh token cookie (7 days)."
-          }
-        },
-        {
-          "name": "Logout",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "pm.test('Response has message', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data.message).to.include('logged out');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
-            },
-            "description": "Logout user. Clears access token and removes refresh token cookie."
-          }
-        },
-        {
-          "name": "Refresh Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has new accessToken', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('accessToken');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/refresh-token",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh-token"]
-            },
-            "description": "Refresh access token using httpOnly refresh token cookie. Returns new access token."
-          }
-        },
-        {
-          "name": "Forgot Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "pm.test('Response has message', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('message');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "forgot-password"]
-            },
-            "description": "Request password reset email. Sends reset token to user's email (valid for 1 hour)."
-          }
-        },
-        {
-          "name": "Reset Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"newPassword\": \"NewPassword123!\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "reset-password"]
-            },
-            "description": "Reset password using token from email. Token is single-use and expires after 1 hour."
-          }
-        },
-        {
-          "name": "Change Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "pm.test('Password was changed', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data.message).to.include('changed');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"Admin123!\",\n  \"newPassword\": \"NewPassword123!\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "change-password"]
-            },
-            "description": "Change password for authenticated user. Requires current password."
-          }
-        }
-      ],
-      "description": "Authentication endpoints"
-    },
-    {
-      "name": "Users",
-      "item": [
-        {
-          "name": "Get All Users (Admin Only)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "pm.test('Response has data array', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.be.an('array');",
-                  "});",
-                  "",
-                  "pm.test('Response has meta with pagination', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.meta).to.have.property('total');",
-                  "    pm.expect(jsonData.meta).to.have.property('page');",
-                  "    pm.expect(jsonData.meta).to.have.property('limit');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users?page=1&limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["users"],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "20"
-                }
-              ]
-            },
-            "description": "Get paginated list of all users. Admin only."
-          }
-        },
-        {
-          "name": "Get User by ID (Admin Only)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has user data', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.expect(jsonData.data).to.have.property('email');",
-                  "    pm.expect(jsonData.data).to.have.property('fullName');",
-                  "    pm.expect(jsonData.data).to.have.property('role');",
-                  "});",
-                  "",
-                  "pm.test('Password is not in response', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.not.have.property('password');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/:userId",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", ":userId"],
-              "variable": [
-                {
-                  "key": "userId",
-                  "value": "{{userId}}"
-                }
-              ]
-            },
-            "description": "Get a specific user by ID. Admin only."
-          }
-        },
-        {
-          "name": "Create User (Admin Only)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 201', () => {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "pm.test('Response has created user', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.expect(jsonData.data).to.have.property('email');",
-                  "    pm.expect(jsonData.data).to.have.property('role');",
-                  "});",
-                  "",
-                  "pm.test('Password is not in response', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.not.have.property('password');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"fullName\": \"New User\",\n  \"password\": \"Password123!\",\n  \"role\": \"student\",\n  \"sex\": \"male\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["users"]
-            },
-            "description": "Create a new user. Admin only. Password must be at least 8 characters with 1 uppercase letter and 1 number."
-          }
-        },
-        {
-          "name": "Update User (Admin Only)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has updated user', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.expect(jsonData.data).to.have.property('fullName');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Updated Name\",\n  \"sex\": \"male\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/users/:userId",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", ":userId"],
-              "variable": [
-                {
-                  "key": "userId",
-                  "value": "{{userId}}"
-                }
-              ]
-            },
-            "description": "Update user details. Admin only. Cannot update email, role, or password through this endpoint."
-          }
-        },
-        {
-          "name": "Deactivate User (Admin Only)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "pm.test('Response has message', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data.message).to.include('deactivated');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/:userId/deactivate",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", ":userId", "deactivate"],
-              "variable": [
-                {
-                  "key": "userId",
-                  "value": "{{userId}}"
-                }
-              ]
-            },
-            "description": "Soft deactivate a user (sets isActive to false). User cannot login but email is reserved."
-          }
-        },
-        {
-          "name": "Delete User (Admin Only)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', () => {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response has success: true', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "pm.test('Response has message', () => {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data.message).to.include('deleted permanently');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/:userId",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", ":userId"],
-              "variable": [
-                {
-                  "key": "userId",
-                  "value": "{{userId}}"
-                }
-              ]
-            },
-            "description": "Permanently delete a user from database. Allows email to be reused for new user creation."
-          }
-        }
-      ],
-      "description": "User management endpoints (Admin only)"
     }
   ]
 }

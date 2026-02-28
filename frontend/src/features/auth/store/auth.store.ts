@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AuthUser } from '../types/auth.types';
 import { authApi } from '../services/auth.service';
-import { setAccessToken } from '../../../lib/axios';
+import { setAccessToken as setAxiosToken } from '../../../lib/axios';
 
 interface AuthState {
   user: AuthUser | null;
@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthStore>()(
       setAccessToken: (token: string | null) => {
         set({ accessToken: token });
         // Also update axios instance
-        setAccessToken(token);
+        setAxiosToken(token);
       },
 
       login: async (email: string, password: string) => {

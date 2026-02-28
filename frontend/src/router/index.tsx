@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute, RoleRoute } from '../components/layout/ProtectedRoute';
+import { AdminLayout } from '../components/layout';
 import { LoginPage } from '../features/auth/pages/LoginPage';
+import {
+  AdminDashboard,
+  TeachersList,
+  StudentsList,
+  CoursesList,
+  EnrollmentsList,
+  BookingRequestsList,
+  ProfileChangesList,
+  PaymentsList,
+} from '../features/admin';
 import { authApi } from '../features/auth/services/auth.service';
 import { useAuthStore } from '../features/auth/store/auth.store';
 
@@ -300,14 +311,27 @@ const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      // Admin Routes
       {
-        path: '/admin/dashboard',
+        path: '/admin',
         element: (
           <RoleRoute allowedRoles={['admin']}>
-            <DashboardPlaceholder role="admin" />
+            <AdminLayout />
           </RoleRoute>
         ),
+        children: [
+          { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+          { path: 'dashboard', element: <AdminDashboard /> },
+          { path: 'teachers', element: <TeachersList /> },
+          { path: 'students', element: <StudentsList /> },
+          { path: 'courses', element: <CoursesList /> },
+          { path: 'enrollments', element: <EnrollmentsList /> },
+          { path: 'booking-requests', element: <BookingRequestsList /> },
+          { path: 'profile-changes', element: <ProfileChangesList /> },
+          { path: 'payments', element: <PaymentsList /> },
+        ],
       },
+      // Teacher Dashboard (placeholder)
       {
         path: '/teacher/dashboard',
         element: (
@@ -316,6 +340,7 @@ const router = createBrowserRouter([
           </RoleRoute>
         ),
       },
+      // Student Dashboard (placeholder)
       {
         path: '/student/dashboard',
         element: (

@@ -27,9 +27,13 @@ This directory contains Postman collections and environments for testing the Qur
 | `accessToken` | JWT access token (auto-set after login) | `eyJhbGciOiJIUzI1NiIs...` |
 | `tokenExpiry` | Token expiration timestamp (auto-set) | `1701234567890` |
 | `userId` | Current user ID (auto-set after login) | `uuid-here` |
-| `userEmail` | Current user email (auto-set) | `admin@qurandiscipline.academy` |
-| `userRole` | Current user role (auto-set) | `admin` |
-| `lastLoginEmail` | Last email used for login (for convenience) | `admin@qurandiscipline.academy` |
+| `teacherId` | Teacher ID (set after creating teacher) | `uuid-here` |
+| `studentId` | Student ID (set after creating student) | `uuid-here` |
+| `courseId` | Course ID (set after creating course) | `uuid-here` |
+| `enrollmentId` | Enrollment ID (set after creating enrollment) | `uuid-here` |
+| `bookingId` | Booking request ID (set after creating) | `uuid-here` |
+| `paymentId` | Payment ID (set after creating payment) | `uuid-here` |
+| `changeId` | Profile change request ID | `uuid-here` |
 
 ## Quick Start
 
@@ -51,43 +55,142 @@ Use the **Login** request in the Auth folder:
 }
 ```
 
-**Note:** Tests validate responses but do NOT save tokens to the environment. You'll need to manually set the `accessToken` in your environment for authenticated requests.
+**Note:** After login, `accessToken` and other user variables are automatically saved to the environment.
 
-### 3. Test Authenticated Endpoints
+### 3. Test Admin Endpoints
 
-For protected endpoints, manually set the `accessToken` environment variable from the login response, or use a tool like Postman's cookie handling with refresh tokens. The collection includes:
+All admin endpoints require authentication. The collection uses Bearer token auth from the `accessToken` environment variable.
 
-**Auth Endpoints:**
-- `POST /auth/login` - Login
-- `POST /auth/logout` - Logout
-- `POST /auth/refresh-token` - Refresh access token
-- `POST /auth/forgot-password` - Request password reset
-- `POST /auth/reset-password` - Reset password with token
-- `PATCH /auth/change-password` - Change password (authenticated)
+## API Endpoints
 
-**User Endpoints (Admin Only):**
-- `GET /users` - Get all users (paginated)
-- `GET /users/:id` - Get user by ID
-- `POST /users` - Create new user
-- `PATCH /users/:id` - Update user
-- `DELETE /users/:id` - Delete user (soft delete)
+### Auth Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/login` | Login with email/password |
+| POST | `/auth/logout` | Logout and clear tokens |
+| POST | `/auth/refresh-token` | Refresh access token |
+| POST | `/auth/forgot-password` | Request password reset |
+| POST | `/auth/reset-password` | Reset password with token |
+| PATCH | `/auth/change-password` | Change password (authenticated) |
+
+### Admin - Teachers
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/teachers` | Get all teachers (paginated, search, availability filter) |
+| GET | `/admin/teachers/:id` | Get teacher by ID |
+| POST | `/admin/teachers` | Create new teacher account |
+| PATCH | `/admin/teachers/:id` | Update teacher profile |
+| PATCH | `/admin/teachers/:id/deactivate` | Deactivate teacher |
+| PATCH | `/admin/teachers/:id/activate` | Reactivate teacher |
+| GET | `/admin/teachers/stats` | Get teacher statistics |
+
+### Admin - Students
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/students` | Get all students (paginated, search, status filter) |
+| GET | `/admin/students/:id` | Get student by ID |
+| POST | `/admin/students` | Create new student account |
+| PATCH | `/admin/students/:id` | Update student profile |
+| PATCH | `/admin/students/:id/deactivate` | Deactivate student |
+| PATCH | `/admin/students/:id/activate` | Reactivate student |
+| GET | `/admin/students/stats` | Get student statistics |
+
+### Admin - Courses
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/courses` | Get all courses (paginated, filters) |
+| GET | `/admin/courses/:id` | Get course by ID |
+| POST | `/admin/courses` | Create new course |
+| PATCH | `/admin/courses/:id` | Update course |
+| PATCH | `/admin/courses/:id/deactivate` | Deactivate course |
+| PATCH | `/admin/courses/:id/activate` | Reactivate course |
+
+### Admin - Enrollments
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/enrollments` | Get all enrollments (paginated, status filter) |
+| GET | `/admin/enrollments/:id` | Get enrollment by ID |
+| POST | `/admin/enrollments` | Create new enrollment |
+| PATCH | `/admin/enrollments/:id/status` | Update enrollment status |
+| PATCH | `/admin/enrollments/:id/progress` | Update progress percentage |
+
+**Status values:** `active` | `completed` | `paused` | `cancelled`
+
+**Package types:** `foundation` | `mastery` | `advanced` | `group_basic` | `group_premium`
+
+### Admin - Booking Requests
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/booking-requests` | Get all requests (paginated, status filter) |
+| GET | `/admin/booking-requests/:id` | Get request by ID |
+| PATCH | `/admin/booking-requests/:id/assign` | Assign teacher to request |
+| PATCH | `/admin/booking-requests/:id/confirm` | Confirm with Zoom link |
+| PATCH | `/admin/booking-requests/:id/cancel` | Cancel request |
+
+**Status values:** `pending` | `confirmed` | `completed` | `cancelled`
+
+### Admin - Profile Changes
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/teacher-profile-changes` | Get all requests (paginated, filters) |
+| GET | `/admin/teacher-profile-changes/:id` | Get request by ID |
+| PATCH | `/admin/teacher-profile-changes/:id/approve` | Approve profile change |
+| PATCH | `/admin/teacher-profile-changes/:id/reject` | Reject profile change |
+
+**Status values:** `pending` | `approved` | `rejected`
+
+### Admin - Payments
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/payments` | Get all payments (paginated, filters) |
+| GET | `/admin/payments/:id` | Get payment by ID |
+| POST | `/admin/payments` | Manually record payment |
+| PATCH | `/admin/payments/:id/verify` | Mark as verified |
+| GET | `/admin/payments/summary/revenue` | Get revenue summary |
+
+**Status values:** `pending` | `completed` | `failed` | `refunded`
+
+**Payment methods:** `paypal` | `bank_transfer`
+
+### Admin - Dashboard
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/dashboard/stats` | Get dashboard statistics |
+| GET | `/admin/dashboard/revenue-chart` | Get revenue chart data |
+| GET | `/admin/dashboard/students/by-country` | Students by country |
+| GET | `/admin/dashboard/students/by-package` | Students by package type |
+
+### Public Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/booking-requests` | Create public booking request |
 
 ## Features
 
 ### Auto Token Refresh
 
-The collection has a pre-request script that automatically refreshes your access token if it's expired. You don't need to manually refresh!
+The collection has a pre-request script that automatically refreshes your access token if it's expired.
 
 ### Test Scripts
 
 Each request includes test scripts that:
 - Validate response status codes
 - Check response structure
-- Save important data (tokens, user IDs) to environment variables
+- Save important data (tokens, IDs) to environment variables
 
 ### Cookie Handling
 
-The `/auth/login` and `/auth/refresh-token` endpoints set an httpOnly cookie for the refresh token. Postman automatically handles this - just make sure **Cookie Jar** is enabled in Postman settings.
+The `/auth/login` and `/auth/refresh-token` endpoints set an httpOnly cookie for the refresh token. Postman automatically handles this.
 
 ## Password Requirements
 
@@ -113,6 +216,30 @@ After running `npx prisma db seed`, you can login with:
 |------|-------|----------|
 | Admin | `admin@qurandiscipline.academy` | `Admin@1234` |
 
+## Enum Values Reference
+
+### Course Types
+- `memorization` - Quran memorization courses
+- `islamic_studies` - Islamic studies courses
+- `understanding` - Quran understanding courses
+
+### Subscription Status
+- `trial` - Trial period
+- `active` - Active subscription
+- `paused` - Paused subscription
+- `cancelled` - Cancelled subscription
+
+### Package Types
+- `foundation` - Foundation level
+- `mastery` - Mastery level
+- `advanced` - Advanced level
+- `group_basic` - Group basic
+- `group_premium` - Group premium
+
+### Sex
+- `male`
+- `female`
+
 ## Troubleshooting
 
 ### 401 Unauthorized
@@ -120,7 +247,7 @@ After running `npx prisma db seed`, you can login with:
 - The token refresh script will attempt to auto-refresh before each request.
 
 ### 403 Forbidden
-- You don't have permission for this endpoint (e.g., non-admin trying to access admin endpoints).
+- You don't have permission for this endpoint (admin role required for admin endpoints).
 
 ### 422 Unprocessable Entity
 - Check your request body format.
@@ -130,29 +257,3 @@ After running `npx prisma db seed`, you can login with:
 ### Cookie Not Being Set
 - Ensure Postman's **Cookie Jar** is enabled:
   - Settings → General → Turn on "Cookie Jar"
-
-## Collection Scripts Reference
-
-### Pre-Request Script (Collection Level)
-```javascript
-// Auto-refresh token if expired
-const token = pm.environment.get('accessToken');
-const tokenExpiry = pm.environment.get('tokenExpiry');
-const now = new Date().getTime();
-
-if (token && tokenExpiry && now > parseInt(tokenExpiry)) {
-    // Send refresh request...
-}
-```
-
-### Test Script (Login Example)
-```javascript
-// Validate response
-pm.test('Status code is 201', () => {
-    pm.response.to.have.status(201);
-});
-
-// Save token
-const jsonData = pm.response.json();
-pm.environment.set('accessToken', jsonData.data.accessToken);
-```
