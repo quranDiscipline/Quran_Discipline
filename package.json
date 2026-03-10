@@ -14,7 +14,16 @@
     "test": "npm run test --ws",
     "build": "npm run build --ws"
   },
-  "keywords": ["quran", "academy", "education", "islamic"],
+  "keywords": [
+    "quran",
+    "academy",
+    "education",
+    "islamic"
+  ],
   "author": "Quran Discipline Academy",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "cookie-parser": "^1.4.7"
+  }
 }
