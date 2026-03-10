@@ -87,12 +87,15 @@ export class AuthService {
     );
 
     // Set refresh token as httpOnly cookie
+    const isProduction = this.config.get<string>('NODE_ENV') === 'production';
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: this.config.get<string>('NODE_ENV') === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax', // Use 'lax' in development for cross-port cookies
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/api/auth',
+      path: '/',
+      // In development with localhost, don't set domain explicitly
+      ...(isProduction && { domain: this.config.get('COOKIE_DOMAIN') }),
     });
 
     return {
@@ -110,11 +113,13 @@ export class AuthService {
   }
 
   logout(res: Response) {
+    const isProduction = this.config.get<string>('NODE_ENV') === 'production';
     res.clearCookie('refresh_token', {
       httpOnly: true,
-      secure: this.config.get<string>('NODE_ENV') === 'production',
-      sameSite: 'strict',
-      path: '/api/auth',
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      path: '/',
+      ...(isProduction && { domain: this.config.get('COOKIE_DOMAIN') }),
     });
   }
 
@@ -153,7 +158,18 @@ export class AuthService {
         expiresIn: this.accessExpiration,
       } as any);
 
-      return { accessToken };
+      return {
+        accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          sex: user.sex,
+          profilePictureUrl: user.profilePictureUrl,
+          mustChangePassword: user.mustChangePassword,
+        },
+      };
     } catch (error) {
       throw new UnauthorizedException({
         message: 'Invalid or expired refresh token',

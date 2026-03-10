@@ -37,20 +37,34 @@ export class CreatePaymentDto {
 
 export class PaymentQueryDto {
   @ApiPropertyOptional({ enum: PaymentStatus })
+  @IsOptional()
+  @IsEnum(PaymentStatus)
   status?: PaymentStatus;
 
   @ApiPropertyOptional({ enum: PaymentMethod })
+  @IsOptional()
+  @IsEnum(PaymentMethod)
   paymentMethod?: PaymentMethod;
 
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
   startDate?: string;
 
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
   endDate?: string;
 
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   page?: number;
 
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   limit?: number;
 }

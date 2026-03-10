@@ -11,6 +11,7 @@ import {
   IsInt,
   Min,
   Max,
+  IsUrl,
 } from 'class-validator';
 import { Sex } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -85,4 +86,12 @@ export class CreateTeacherDto {
   @Min(5)
   @Max(100)
   hourlyRate?: number;
+
+  @ApiPropertyOptional({
+    example: 'https://example.com/photo.jpg',
+    description: 'Profile photo URL',
+  })
+  @IsUrl()
+  @IsOptional()
+  profilePictureUrl?: string;
 }

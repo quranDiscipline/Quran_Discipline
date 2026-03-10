@@ -178,9 +178,9 @@ describe('AuthService', () => {
       expect(res.cookie).toHaveBeenCalledWith('refresh_token', 'refresh.token', {
         httpOnly: true,
         secure: false,
-        sameSite: 'strict',
+        sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: '/api/auth',
+        path: '/',
       });
     });
   });
@@ -196,8 +196,8 @@ describe('AuthService', () => {
       expect(res.clearCookie).toHaveBeenCalledWith('refresh_token', {
         httpOnly: true,
         secure: false,
-        sameSite: 'strict',
-        path: '/api/auth',
+        sameSite: 'lax',
+        path: '/',
       });
     });
   });
@@ -214,7 +214,18 @@ describe('AuthService', () => {
 
       const result = await service.refreshToken(req);
 
-      expect(result).toEqual({ accessToken: 'new.access.token' });
+      expect(result).toEqual({
+        accessToken: 'new.access.token',
+        user: {
+          id: mockUser.id,
+          email: mockUser.email,
+          fullName: mockUser.fullName,
+          role: mockUser.role,
+          sex: mockUser.sex,
+          profilePictureUrl: mockUser.profilePictureUrl,
+          mustChangePassword: mockUser.mustChangePassword,
+        },
+      });
     });
 
     it('throws UnauthorizedException when no cookie present', async () => {

@@ -8,6 +8,7 @@ import {
   Matches,
   MaxLength,
   IsArray,
+  IsDate,
 } from 'class-validator';
 import { Sex, StudentLevel, PaymentMethod } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -40,8 +41,8 @@ export class CreateStudentDto {
 
   @ApiProperty({ enum: StudentLevel })
   @IsEnum(StudentLevel)
-  @IsNotEmpty()
-  currentLevel!: StudentLevel;
+  @IsOptional()
+  currentLevel?: StudentLevel;
 
   @ApiPropertyOptional({ example: 'USA' })
   @IsString()
@@ -57,6 +58,16 @@ export class CreateStudentDto {
   @IsString()
   @IsOptional()
   whatsappNumber?: string;
+
+  @ApiPropertyOptional({ example: 'America/New_York' })
+  @IsString()
+  @IsOptional()
+  timezone?: string;
+
+  @ApiPropertyOptional({ example: '2000-01-01' })
+  @IsDate()
+  @IsOptional()
+  dateOfBirth?: Date;
 
   @ApiPropertyOptional({ enum: PaymentMethod })
   @IsEnum(PaymentMethod)

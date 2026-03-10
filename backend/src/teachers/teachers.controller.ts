@@ -44,6 +44,12 @@ export class TeachersController {
     return this.teachersService.findAll(query);
   }
 
+  @Get('stats')
+  @ApiOperation({ summary: 'Get teachers statistics (admin only)' })
+  async getStats() {
+    return this.teachersService.getStats();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get teacher by ID (admin only)' })
   async findById(@Param('id') id: string): Promise<TeacherById> {
@@ -77,6 +83,17 @@ export class TeachersController {
     return {
       success: true,
       data: { message: 'Teacher deactivated successfully' },
+    };
+  }
+
+  @Patch(':id/activate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Activate teacher (admin only)' })
+  async activate(@Param('id') id: string) {
+    await this.teachersService.activate(id);
+    return {
+      success: true,
+      data: { message: 'Teacher activated successfully' },
     };
   }
 }

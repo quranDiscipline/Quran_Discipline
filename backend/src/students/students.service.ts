@@ -205,13 +205,17 @@ export class StudentsService {
       });
 
       // Create student profile
+      const studentData: any = {
+        userId: user.id,
+        sex,
+        currentLevel: currentLevel || 'beginner', // Default to beginner if not provided
+      };
+      if (paymentMethod !== undefined) {
+        studentData.paymentMethod = paymentMethod;
+      }
+
       const student = await tx.student.create({
-        data: {
-          userId: user.id,
-          sex,
-          currentLevel,
-          paymentMethod,
-        },
+        data: studentData,
         include: {
           user: {
             select: {
@@ -234,7 +238,9 @@ export class StudentsService {
       return student;
     });
 
-    this.logger.log(`Created new student: ${result.user.email}`);
+    // Access email through the included user relation
+    const resultWithUser = result as any;
+    this.logger.log(`Created new student: ${resultWithUser.user?.email}`);
 
     // TODO Phase 8: Send welcome email with temporary credentials
     // await this.emailService.sendStudentWelcomeEmail(result.user.email, dto.temporaryPassword);
@@ -337,6 +343,57 @@ export class StudentsService {
     });
 
     this.logger.log(`Deactivated student: ${student.user.email}`);
+  }
+
+  async activate(id: string): Promise<void> {
+    const student = await this.prisma.student.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    // Activate by setting isActive to true
+    await this.prisma.user.update({
+      where: { id: student.userId },
+      data: { isActive: true },
+    });
+
+    this.logger.log(`Activated student: ${student.user.email}`);
+  }
+
+  async getStats() {
+    const [totalStudents, activeStudents, byStatus] = await Promise.all([
+      this.prisma.student.count(),
+      this.prisma.student.count({ where: { user: { isActive: true } } }),
+      this.prisma.student.findMany({
+        select: { subscriptionStatus: true, user: { select: { country: true } } },
+        where: { user: { isActive: true } },
+      }),
+    ]);
+
+    // Count by subscription status
+    const statusCounts: Record<string, number> = {};
+    byStatus.forEach((student) => {
+      const status = student.subscriptionStatus || 'unknown';
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+    });
+
+    // Count by country
+    const countryCounts: Record<string, number> = {};
+    byStatus.forEach((student) => {
+      const country = student.user.country || 'unknown';
+      countryCounts[country] = (countryCounts[country] || 0) + 1;
+    });
+
+    return {
+      total: totalStudents,
+      active: activeStudents,
+      bySubscriptionStatus: statusCounts,
+      byCountry: countryCounts,
+    };
   }
 
   async getStudentStats(id: string): Promise<StudentStats> {

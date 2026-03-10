@@ -62,4 +62,15 @@ export class CoursesController {
       data: { message: 'Course deactivated successfully' },
     };
   }
+
+  @Patch(':id/activate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Activate course (admin only)' })
+  async activate(@Param('id') id: string) {
+    await this.coursesService.activate(id);
+    return {
+      success: true,
+      data: { message: 'Course activated successfully' },
+    };
+  }
 }

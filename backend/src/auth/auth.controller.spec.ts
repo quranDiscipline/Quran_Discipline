@@ -93,16 +93,36 @@ describe('AuthController', () => {
   });
 
   describe('refreshToken', () => {
-    it('returns new accessToken', async () => {
+    it('returns new accessToken and user', async () => {
       mockAuthService.refreshToken.mockResolvedValue({
         accessToken: 'new.access.token',
+        user: {
+          id: 'user-1',
+          email: 'test@example.com',
+          fullName: 'Test User',
+          role: 'student',
+          sex: 'male',
+          profilePictureUrl: null,
+          mustChangePassword: false,
+        },
       });
 
       const req: any = { cookies: {} };
 
       const result = await controller.refreshToken(req);
 
-      expect(result).toEqual({ accessToken: 'new.access.token' });
+      expect(result).toEqual({
+        accessToken: 'new.access.token',
+        user: {
+          id: 'user-1',
+          email: 'test@example.com',
+          fullName: 'Test User',
+          role: 'student',
+          sex: 'male',
+          profilePictureUrl: null,
+          mustChangePassword: false,
+        },
+      });
     });
   });
 

@@ -160,7 +160,7 @@ export class TeachersService {
     const passwordHash = await bcrypt.hash(dto.temporaryPassword, this.bcryptRounds);
 
     // Extract user fields and teacher fields
-    const { email, fullName, sex, temporaryPassword, bio, qualifications, specializations, phoneNumber, whatsappNumber, country, hourlyRate, ...rest } = dto;
+    const { email, fullName, sex, temporaryPassword, bio, qualifications, specializations, phoneNumber, whatsappNumber, country, hourlyRate, profilePictureUrl, ...rest } = dto;
 
     // Use transaction to create user and teacher
     const result = await this.prisma.$transaction(async (tx) => {
@@ -174,6 +174,7 @@ export class TeachersService {
           phoneNumber,
           whatsappNumber,
           country,
+          profilePictureUrl,
           role: UserRole.teacher,
           mustChangePassword: true,
         },
@@ -325,6 +326,52 @@ export class TeachersService {
     });
 
     this.logger.log(`Deactivated teacher: ${teacher.user.email}`);
+  }
+
+  async activate(id: string): Promise<void> {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    // Activate by setting isActive to true
+    await this.prisma.user.update({
+      where: { id: teacher.userId },
+      data: { isActive: true },
+    });
+
+    this.logger.log(`Activated teacher: ${teacher.user.email}`);
+  }
+
+  async getStats() {
+    const [totalTeachers, availableTeachers, unavailableTeachers, bySpecialization] = await Promise.all([
+      this.prisma.teacher.count(),
+      this.prisma.teacher.count({ where: { isAvailable: true } }),
+      this.prisma.teacher.count({ where: { isAvailable: false } }),
+      this.prisma.teacher.findMany({
+        select: { specializations: true },
+      }),
+    ]);
+
+    // Count by specialization
+    const specializationCounts: Record<string, number> = {};
+    bySpecialization.forEach((teacher) => {
+      const specs = teacher.specializations as string[] | null;
+      (specs || []).forEach((spec) => {
+        specializationCounts[spec] = (specializationCounts[spec] || 0) + 1;
+      });
+    });
+
+    return {
+      total: totalTeachers,
+      available: availableTeachers,
+      unavailable: unavailableTeachers,
+      bySpecialization: specializationCounts,
+    };
   }
 
   async getTeacherStats(id: string): Promise<TeacherStats> {

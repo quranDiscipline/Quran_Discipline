@@ -124,4 +124,19 @@ export class CoursesService {
       data: { isActive: false },
     });
   }
+
+  async activate(id: string): Promise<void> {
+    const course = await this.prisma.course.findUnique({
+      where: { id },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    await this.prisma.course.update({
+      where: { id },
+      data: { isActive: true },
+    });
+  }
 }

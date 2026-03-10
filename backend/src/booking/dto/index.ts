@@ -69,6 +69,16 @@ export class CreateBookingRequestDto {
   @IsString()
   @IsOptional()
   preferredTime?: string;
+
+  @ApiPropertyOptional({ description: 'ID of the selected time slot (format: teacherId-date-startTime). If provided, teacher will be pre-assigned.' })
+  @IsString()
+  @IsOptional()
+  selectedSlotId?: string;
+
+  @ApiProperty({ description: 'Client timezone in IANA format (e.g., America/New_York, Europe/London)' })
+  @IsString()
+  @IsNotEmpty()
+  timezone!: string;
 }
 
 export class AssignBookingDto {
