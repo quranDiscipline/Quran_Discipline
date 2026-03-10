@@ -7,9 +7,11 @@ import {
   CalendarCheck,
   FileEdit,
   CreditCard,
+  Layout,
+  Calendar,
   X,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAuthStore } from '@/features/auth/store';
 
 interface NavItem {
@@ -25,8 +27,10 @@ const navItems: NavItem[] = [
   { path: '/admin/courses', label: 'Courses', icon: BookOpen },
   { path: '/admin/enrollments', label: 'Enrollments', icon: CalendarCheck },
   { path: '/admin/booking-requests', label: 'Booking Requests', icon: CalendarCheck },
+  { path: '/admin/teacher-schedules', label: 'Teacher Schedules', icon: Calendar },
   { path: '/admin/profile-changes', label: 'Profile Changes', icon: FileEdit },
   { path: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { path: '/admin/cms', label: 'Landing Page CMS', icon: Layout },
 ];
 
 interface AdminSidebarProps {
