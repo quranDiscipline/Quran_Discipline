@@ -980,7 +980,7 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+1234567890\",\n  \"country\": \"United States\",\n  \"preferredDate\": \"2026-03-01\",\n  \"preferredTime\": \"14:00\",\n  \"sex\": \"male\"\n}"
-claude --resume 4a0a8c4e-aec3-421c-97f5-3b60b6202050            },
+            },
             "url": {
               "raw": "{{baseUrl}}/booking-requests",
               "host": ["{{baseUrl}}"],
