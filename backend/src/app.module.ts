@@ -15,6 +15,8 @@ import { BookingModule } from './booking/booking.module';
 import { TeacherProfileChangesModule } from './teacher-profile-changes/teacher-profile-changes.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
+import { LandingPageModule } from './landing-page/landing-page.module';
+import { TeacherSchedulesModule } from './teacher-schedules/teacher-schedules.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { AdminModule } from './admin/admin.module';
     TeacherProfileChangesModule,
     PaymentsModule,
     AdminModule,
+    LandingPageModule,
+    TeacherSchedulesModule,
   ],
   controllers: [AppController],
   providers: [

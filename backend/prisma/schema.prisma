@@ -108,6 +108,9 @@ enum LandingSection {
   teachers
   faq
   trust_bar
+  how_it_works
+  pricing
+  footer
 }
 
 enum ChangeType {
@@ -171,6 +174,9 @@ model Teacher {
   totalStudents   Int      @default(0)
   rating          Decimal  @default(0) @db.Decimal(3, 2)
   isAvailable     Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  featuredOrder   Int?     // For ordering featured teachers on landing page
+  landingBio      String?  // Short bio specifically for landing page
   pendingChanges  Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -183,8 +189,10 @@ model Teacher {
   profileChanges   TeacherProfileChange[]
   assignedBookings BookingRequest[]       @relation("AssignedTeacher")
   reviewedChanges  TeacherProfileChange[] @relation("ReviewingAdmin")
+  blockedDates     BlockedDate[]
 
   @@index([userId])
+  @@index([isFeatured, featuredOrder])
 }
 
 model Student {
@@ -491,4 +499,18 @@ model LandingPageContent {
 
   @@index([sectionName])
   @@index([isActive])
+}
+
+model BlockedDate {
+  id          String    @id @default(uuid())
+  teacherId   String?   // null = all teachers blocked (global holiday)
+  teacher     Teacher?  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  date        DateTime
+  reason      String?
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([teacherId, date])
+  @@index([date]) // For querying all blocks on a date
 }
