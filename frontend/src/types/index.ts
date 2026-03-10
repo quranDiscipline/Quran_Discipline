@@ -16,6 +16,7 @@ export type PackageType =
   | 'group_premium';
 export type CourseType = 'memorization' | 'islamic_studies' | 'understanding';
 export type StudentLevel = 'beginner' | 'intermediate' | 'advanced';
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
 export interface AuthUser {
   id: string;
