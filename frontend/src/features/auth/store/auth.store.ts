@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AuthUser } from '../types/auth.types';
 import { authApi } from '../services/auth.service';
-import { setAccessToken as setAxiosToken } from '../../../lib/axios';
+import { setAccessToken } from '../../../lib/axios';
 
 interface AuthState {
   user: AuthUser | null;
@@ -35,14 +35,14 @@ export const useAuthStore = create<AuthStore>()(
 
       // Actions
       setUser: (user: AuthUser) =>
-        set({ user, isAuthenticated: true, isLoading: false }),
+        set({ user, isAuthenticated: true, isLoading: false }), // Set both for consistency
 
       setLoading: (isLoading: boolean) => set({ isLoading }),
 
       setAccessToken: (token: string | null) => {
         set({ accessToken: token });
         // Also update axios instance
-        setAxiosToken(token);
+        setAccessToken(token);
       },
 
       login: async (email: string, password: string) => {
@@ -84,25 +84,49 @@ export const useAuthStore = create<AuthStore>()(
           const response = await authApi.refreshToken();
 
           set({
+            user: response.user,
+            isAuthenticated: true,
             accessToken: response.accessToken,
           });
 
           setAccessToken(response.accessToken);
         } catch (error) {
-          // If refresh fails, logout the user
-          await useAuthStore.getState().logout();
+          // If refresh fails, clear auth state (but don't call logout API to avoid recursive calls)
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            accessToken: null,
+          });
+          setAccessToken(null);
           throw error;
         }
       },
 
       initialize: async () => {
+        // Try to refresh token using the httpOnly cookie
         set({ isLoading: true });
         try {
-          await useAuthStore.getState().refreshToken();
+          const response = await authApi.refreshToken();
+          // If successful, restore session
+          set({
+            user: response.user,
+            isAuthenticated: true,
+            isLoading: false,
+            accessToken: response.accessToken,
+          });
+          setAccessToken(response.accessToken);
         } catch {
-          // No valid refresh token - user is logged out
-        } finally {
-          set({ isLoading: false });
+          // No valid refresh token - user is logged out, clear everything
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            accessToken: null,
+          });
+          setAccessToken(null);
+          // Also clear localStorage
+          localStorage.removeItem('quran-academy-auth');
         }
       },
 
@@ -119,10 +143,10 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'quran-academy-auth',
-      // Only persist non-sensitive info - token and loading state are in memory only
+      // Only persist user info (for welcome message, etc.) - NOT isAuthenticated
+      // isAuthenticated should be derived from valid token
       partialize: (state) => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
       }),
     },
   ),

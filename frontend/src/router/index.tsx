@@ -12,31 +12,12 @@ import {
   BookingRequestsList,
   ProfileChangesList,
   PaymentsList,
+  CMSPage,
+  TeacherSchedulesPage,
 } from '../features/admin';
+import { LandingPage, BookingPage } from '../features/landing';
 import { authApi } from '../features/auth/services/auth.service';
 import { useAuthStore } from '../features/auth/store/auth.store';
-
-// Placeholder components for Phase 2
-function LandingPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-primary mb-4">
-          Quran Discipline Academy
-        </h1>
-        <p className="text-gray-600 mb-8">
-          Welcome! Learn Quran with discipline and consistency.
-        </p>
-        <a
-          href="/login"
-          className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-800 transition-colors"
-        >
-          Sign In
-        </a>
-      </div>
-    </div>
-  );
-}
 
 function DashboardPlaceholder({ role }: { role: string }) {
   const { logout } = useAuthStore.getState();
@@ -293,6 +274,14 @@ const router = createBrowserRouter([
     element: <LandingPage />,
   },
   {
+    path: '/booking',
+    element: <BookingPage />,
+  },
+  {
+    path: '/book',
+    element: <Navigate to="/booking" replace />,
+  },
+  {
     path: '/login',
     element: <LoginPage />,
   },
@@ -329,6 +318,8 @@ const router = createBrowserRouter([
           { path: 'booking-requests', element: <BookingRequestsList /> },
           { path: 'profile-changes', element: <ProfileChangesList /> },
           { path: 'payments', element: <PaymentsList /> },
+          { path: 'cms', element: <CMSPage /> },
+          { path: 'teacher-schedules', element: <TeacherSchedulesPage /> },
         ],
       },
       // Teacher Dashboard (placeholder)

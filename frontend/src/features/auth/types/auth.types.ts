@@ -21,6 +21,7 @@ export interface LoginResponse {
 
 export interface RefreshTokenResponse {
   accessToken: string;
+  user: AuthUser;
 }
 
 export interface ForgotPasswordRequest {

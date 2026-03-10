@@ -18,6 +18,7 @@ export function getAccessToken(): string | null {
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
+  withCredentials: true, // Send cookies with all requests
   headers: {
     'Content-Type': 'application/json',
   },
@@ -42,8 +43,16 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // If 401 and haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip token refresh for auth endpoints (login, refresh-token, etc.)
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/');
+
+    // If 401 and haven't retried yet, and not an auth endpoint
+    // Attempt refresh for ANY 401 (even if accessToken is null, might have refresh token cookie)
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthEndpoint
+    ) {
       originalRequest._retry = true;
 
       try {
@@ -68,7 +77,10 @@ api.interceptors.response.use(
         // Refresh failed - clear auth and redirect to login
         setAccessToken(null);
 
-        if (typeof window !== 'undefined') {
+        // Only redirect if not already on login page
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          // Clear any persisted auth state
+          localStorage.removeItem('auth-storage');
           window.location.href = '/login';
         }
 
