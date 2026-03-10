@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useBookingStore } from '../store/booking.store';
 
@@ -36,7 +36,7 @@ export const useBookingStep = () => {
   }, [stepFromUrl, isConfirmed, store]);
 
   // Update URL when step changes
-  const setStep = (newStep: BookingStep) => {
+  const setStep = useCallback((newStep: BookingStep) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       if (newStep === 1) {
@@ -50,10 +50,10 @@ export const useBookingStep = () => {
     if (newStep <= 3) {
       store.goToStep(newStep as 1 | 2 | 3);
     }
-  };
+  }, []); // setSearchParams and store are stable
 
   // Reset booking state and URL
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.delete(STEP_PARAM_KEY);
@@ -61,7 +61,7 @@ export const useBookingStep = () => {
     });
     lastSyncedStepRef.current = 1;
     store.reset();
-  };
+  }, []); // setSearchParams, ref, and store are stable
 
   return {
     step: isConfirmed ? 4 : stepFromUrl,

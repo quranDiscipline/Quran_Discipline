@@ -47,12 +47,12 @@ export function BookingPage() {
   // Reset store on unmount (only if user navigates away without completing)
   useEffect(() => {
     return () => {
-      // Only reset if booking wasn't completed (no email sent confirmation)
-      if (!emailSent) {
-        reset();
+      // Access the latest state directly from the store on unmount
+      if (!useBookingStore.getState().emailSent) {
+        useBookingStore.getState().reset();
       }
     };
-  }, [reset, emailSent]);
+  }, []); // Empty deps - runs cleanup only on unmount
 
   // Teacher preference filter
   const [teacherPreference, setTeacherPreference] = React.useState<'any' | 'male' | 'female'>('any');
