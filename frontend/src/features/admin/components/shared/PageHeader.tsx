@@ -7,7 +7,7 @@ interface PageHeaderProps {
   action?: {
     label: string;
     onClick: () => void;
-    icon?: ReactNode;
+    leftIcon?: ReactNode; // Changed from 'icon' to 'leftIcon' to match Button component
   };
 }
 
@@ -19,8 +19,7 @@ export const PageHeader = ({ title, subtitle, action }: PageHeaderProps) => {
         {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
       </div>
       {action && (
-        <Button onClick={action.onClick} className="shrink-0">
-          {action.icon && <span className="mr-2">{action.icon}</span>}
+        <Button onClick={action.onClick} className="shrink-0" leftIcon={action.leftIcon}>
           {action.label}
         </Button>
       )}

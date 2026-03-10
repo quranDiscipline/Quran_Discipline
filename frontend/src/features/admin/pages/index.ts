@@ -6,3 +6,5 @@ export { EnrollmentsList } from './EnrollmentsList';
 export { BookingRequestsList } from './BookingRequestsList';
 export { ProfileChangesList } from './ProfileChangesList';
 export { PaymentsList } from './PaymentsList';
+export { CMSPage } from './CMSPage';
+export { TeacherSchedulesPage } from './TeacherSchedulesPage';

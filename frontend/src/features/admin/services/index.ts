@@ -6,3 +6,4 @@ export * from './enrollments.service';
 export * from './booking.service';
 export * from './profile-changes.service';
 export * from './payments.service';
+export * from './cms.service';

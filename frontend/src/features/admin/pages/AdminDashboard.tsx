@@ -10,7 +10,6 @@ import {
   GraduationCap,
   BookOpen,
   DollarSign,
-  TrendingUp,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -72,7 +71,7 @@ export const AdminDashboard = () => {
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip
-                formatter={(value: number) => [`$${value}`, 'Revenue']}
+                formatter={(value: number | undefined) => [`$${value ?? 0}`, 'Revenue']}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
               />
               <Bar dataKey="revenue" fill="#064E3B" radius={[4, 4, 0, 0]} />
@@ -91,13 +90,13 @@ export const AdminDashboard = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="count"
                   nameKey="name"
                 >
-                  {packageData.map((entry, index) => (
+                  {packageData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

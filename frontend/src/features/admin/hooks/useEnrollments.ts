@@ -11,7 +11,11 @@ export const enrollmentsKeys = {
   detail: (id: string) => [...enrollmentsKeys.details(), id] as const,
 };
 
-export const useEnrollments = (params?: { page?: number; limit?: number; status?: string }) => {
+export const useEnrollments = (params?: {
+  page?: number;
+  limit?: number;
+  status?: 'active' | 'completed' | 'paused' | 'cancelled';
+}) => {
   return useQuery<PaginatedResponse<Enrollment>>({
     queryKey: enrollmentsKeys.list(params || {}),
     queryFn: () => enrollmentsService.findAll(params),

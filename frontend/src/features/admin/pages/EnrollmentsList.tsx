@@ -17,7 +17,7 @@ export const EnrollmentsList = () => {
   const { data, isLoading } = useEnrollments({
     page,
     limit: 20,
-    status: statusFilter || undefined,
+    status: statusFilter as 'active' | 'completed' | 'paused' | 'cancelled' | undefined,
   });
   const updateStatusMutation = useUpdateEnrollmentStatus();
 
@@ -103,7 +103,7 @@ export const EnrollmentsList = () => {
         action={{
           label: 'New Enrollment',
           onClick: () => {/* Navigate to create */},
-          icon: <Plus className="w-4 h-4" />,
+          leftIcon: <Plus className="w-4 h-4" />,
         }}
       />
 
@@ -138,7 +138,7 @@ export const EnrollmentsList = () => {
               }
             : undefined
         }
-        actions={(enrollment) => (
+        actions={(_enrollment) => (
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={() => {/* Navigate to detail */}}

@@ -58,7 +58,7 @@ describe('PageHeader', () => {
         action={{
           label: 'Add Teacher',
           onClick: () => {},
-          icon: <span data-testid="action-icon">+</span>,
+          leftIcon: <span data-testid="action-icon">+</span>,
         }}
       />
     );

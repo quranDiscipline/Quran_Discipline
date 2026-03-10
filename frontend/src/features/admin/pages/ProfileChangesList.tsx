@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PageHeader, StatusBadge, DataTable, ConfirmModal, type Column } from '../components/shared';
+import { PageHeader, StatusBadge, DataTable, type Column } from '../components/shared';
 import { useProfileChanges, useApproveProfileChange, useRejectProfileChange } from '../hooks';
 import type { ProfileChange } from '../types';
 import { Eye, Check, X, FileText } from 'lucide-react';

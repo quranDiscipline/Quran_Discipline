@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageHeader, StatusBadge, DataTable, ConfirmModal, type Column } from '../components/shared';
 import { useTeachers, useDeactivateTeacher, useActivateTeacher, useCreateTeacher } from '../hooks';
 import type { Teacher } from '../types';
-import { MoreVertical, Eye, Edit, Ban, CheckCircle, Plus, X } from 'lucide-react';
+import { Eye, Edit, Ban, CheckCircle, Plus, X } from 'lucide-react';
 
 interface NewTeacherForm {
   email: string;
@@ -13,6 +13,7 @@ interface NewTeacherForm {
   qualifications: string;
   specializations: string;
   hourlyRate: string;
+  profilePictureUrl: string;
 }
 
 export const TeachersList = () => {
@@ -34,6 +35,7 @@ export const TeachersList = () => {
     qualifications: '',
     specializations: '',
     hourlyRate: '',
+    profilePictureUrl: '',
   });
 
   const { data, isLoading } = useTeachers({ page, limit: 20, search, isAvailable: statusFilter === 'available' ? true : statusFilter === 'unavailable' ? false : undefined });
@@ -72,7 +74,7 @@ export const TeachersList = () => {
       header: 'Specializations',
       render: (teacher) => (
         <div className="flex flex-wrap gap-1">
-          {teacher.specializations.slice(0, 2).map((spec, i) => (
+          {teacher.specializations.slice(0, 2).map((spec: string, i: number) => (
             <span key={i} className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
               {spec}
             </span>
@@ -131,6 +133,7 @@ export const TeachersList = () => {
         qualifications: formData.qualifications.split(',').map(s => s.trim()),
         specializations: formData.specializations.split(',').map(s => s.trim()),
         hourlyRate: parseFloat(formData.hourlyRate) || undefined,
+        profilePictureUrl: formData.profilePictureUrl || undefined,
       });
       setCreateModalOpen(false);
       // Reset form
@@ -143,6 +146,7 @@ export const TeachersList = () => {
         qualifications: '',
         specializations: '',
         hourlyRate: '',
+        profilePictureUrl: '',
       });
     } catch (err) {
       // Error is handled by the mutation
@@ -157,7 +161,7 @@ export const TeachersList = () => {
         action={{
           label: 'Add Teacher',
           onClick: () => setCreateModalOpen(true),
-          icon: <Plus className="w-4 h-4" />,
+          leftIcon: <Plus className="w-4 h-4" />,
         }}
       />
 
@@ -314,6 +318,23 @@ export const TeachersList = () => {
                     <option value="female">Female</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Photo URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profile Photo URL
+                </label>
+                <input
+                  type="url"
+                  value={formData.profilePictureUrl}
+                  onChange={(e) => setFormData({ ...formData, profilePictureUrl: e.target.value })}
+                  className="w-full h-11 border border-gray-300 rounded-lg px-3"
+                  placeholder="https://example.com/photo.jpg"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Supported: Unsplash, Cloudinary, Imgur, Pexels, Pixabay. Leave empty for default.
+                </p>
               </div>
 
               <div>

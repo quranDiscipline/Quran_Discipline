@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PageHeader, StatusBadge, DataTable, ConfirmModal, type Column } from '../components/shared';
-import { useBookingRequests, useAssignBookingRequest, useConfirmBookingRequest, useCancelBookingRequest } from '../hooks';
+import { useBookingRequests, useCancelBookingRequest } from '../hooks';
 import type { BookingRequest } from '../types';
 import { Eye, UserCheck, Video, X } from 'lucide-react';
 import { format } from 'date-fns';
@@ -17,10 +17,11 @@ export const BookingRequestsList = () => {
   const { data, isLoading } = useBookingRequests({
     page,
     limit: 20,
-    status: statusFilter || undefined,
+    status: statusFilter as 'pending' | 'confirmed' | 'completed' | 'cancelled' | undefined,
   });
-  const assignMutation = useAssignBookingRequest();
-  const confirmMutation = useConfirmBookingRequest();
+  // TODO: use these for assign/confirm functionality
+  // const assignMutation = useAssignBookingRequest();
+  // const confirmMutation = useConfirmBookingRequest();
   const cancelMutation = useCancelBookingRequest();
 
   const columns: Column<BookingRequest>[] = [

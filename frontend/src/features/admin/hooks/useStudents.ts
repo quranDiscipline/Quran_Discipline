@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { studentsService } from '../services';
+import { studentsService, type StudentQueryParams } from '../services';
 import type { Student, PaginatedResponse, StudentStats } from '../types';
 import toast from 'react-hot-toast';
 
@@ -10,9 +10,10 @@ export const studentsKeys = {
   details: () => [...studentsKeys.all, 'detail'] as const,
   detail: (id: string) => [...studentsKeys.details(), id] as const,
   stats: () => [...studentsKeys.all, 'stats'] as const,
+  studentStats: (id: string) => [...studentsKeys.all, 'studentStats', id] as const,
 };
 
-export const useStudents = (params?: { page?: number; limit?: number; search?: string; subscriptionStatus?: string }) => {
+export const useStudents = (params?: StudentQueryParams) => {
   return useQuery<PaginatedResponse<Student>>({
     queryKey: studentsKeys.list(params || {}),
     queryFn: () => studentsService.findAll(params),
@@ -27,10 +28,11 @@ export const useStudent = (id: string) => {
   });
 };
 
-export const useStudentStats = () => {
+export const useStudentStats = (id: string) => {
   return useQuery<StudentStats>({
-    queryKey: studentsKeys.stats(),
-    queryFn: () => studentsService.getStats(),
+    queryKey: studentsKeys.studentStats(id),
+    queryFn: () => studentsService.getStudentStats(id),
+    enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -44,16 +46,18 @@ export const useCreateStudent = () => {
       fullName: string;
       temporaryPassword: string;
       sex: 'male' | 'female';
-      country: string;
-      timezone: string;
-      dateOfBirth: string;
+      currentLevel?: 'beginner' | 'intermediate' | 'advanced';
+      country?: string;
+      phoneNumber?: string;
+      whatsappNumber?: string;
+      paymentMethod?: 'paypal' | 'bank_transfer';
     }) => studentsService.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studentsKeys.lists() });
       toast.success('Student created successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || 'Failed to create student');
+      toast.error(error.error?.message || error.response?.data?.error?.message || 'Failed to create student');
     },
   });
 };
@@ -64,13 +68,13 @@ export const useUpdateStudent = () => {
   return useMutation({
     mutationFn: ({ id, ...dto }: { id: string } & Omit<Parameters<typeof studentsService.update>[1], 'id'>) =>
       studentsService.update(id, dto),
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studentsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: studentsKeys.details() });
       toast.success('Student updated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || 'Failed to update student');
+      toast.error(error.error?.message || error.response?.data?.error?.message || 'Failed to update student');
     },
   });
 };
@@ -86,7 +90,7 @@ export const useDeactivateStudent = () => {
       toast.success('Student deactivated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || 'Failed to deactivate student');
+      toast.error(error.error?.message || error.response?.data?.error?.message || 'Failed to deactivate student');
     },
   });
 };
@@ -102,7 +106,7 @@ export const useActivateStudent = () => {
       toast.success('Student activated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || 'Failed to activate student');
+      toast.error(error.error?.message || error.response?.data?.error?.message || 'Failed to activate student');
     },
   });
 };

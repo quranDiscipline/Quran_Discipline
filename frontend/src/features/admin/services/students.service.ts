@@ -26,7 +26,7 @@ export const studentsService = {
     fullName: string;
     sex: 'male' | 'female';
     temporaryPassword: string;
-    currentLevel: 'beginner' | 'intermediate' | 'advanced';
+    currentLevel?: 'beginner' | 'intermediate' | 'advanced';
     country?: string;
     phoneNumber?: string;
     whatsappNumber?: string;
@@ -52,7 +52,21 @@ export const studentsService = {
     await api.patch(`/admin/students/${id}/deactivate`);
   },
 
-  async getStats(id: string): Promise<{
+  async activate(id: string): Promise<void> {
+    await api.patch(`/admin/students/${id}/activate`);
+  },
+
+  async getStats(): Promise<{
+    total: number;
+    active: number;
+    bySubscriptionStatus: Record<string, number>;
+    byCountry: Record<string, number>;
+  }> {
+    const { data } = await api.get('/admin/students/stats');
+    return data.data;
+  },
+
+  async getStudentStats(id: string): Promise<{
     totalSessions: number;
     completedSessions: number;
     currentStreak: number;

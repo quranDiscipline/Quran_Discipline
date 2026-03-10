@@ -2,13 +2,13 @@ import { api } from '@/lib/axios';
 import type { PaginatedResponse, Enrollment } from '../types/admin.types';
 
 export const enrollmentsService = {
-  async findAll(
-    page = 1,
-    limit = 20,
-    status?: 'active' | 'completed' | 'paused' | 'cancelled',
-  ): Promise<PaginatedResponse<Enrollment>> {
+  async findAll(params?: {
+    page?: number;
+    limit?: number;
+    status?: 'active' | 'completed' | 'paused' | 'cancelled';
+  }): Promise<PaginatedResponse<Enrollment>> {
     const { data } = await api.get('/admin/enrollments', {
-      params: { page, limit, ...(status && { status }) },
+      params,
     });
     return data;
   },

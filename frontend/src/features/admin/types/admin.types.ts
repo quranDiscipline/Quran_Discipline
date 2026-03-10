@@ -2,12 +2,35 @@
 export interface DashboardStats {
   totalActiveStudents: number;
   totalTeachers: number;
+  totalActiveTeachers?: number; // Alternative name
   totalRevenueThisMonth: number;
   newEnrollmentsThisMonth: number;
   pendingBookingRequests: number;
+  pendingBookings?: number; // Alternative name
   pendingProfileChanges: number;
   sessionsTodayCount: number;
   averageRating: number;
+  totalActiveCourses?: number;
+  totalCourses?: number;
+}
+
+export interface StudentStats {
+  totalSessions: number;
+  completedSessions: number;
+  currentStreak: number;
+  progressOverview: {
+    totalCourses: number;
+    activeCourses: number;
+    completedCourses: number;
+    averageProgress: number;
+  };
+}
+
+export interface TeacherStats {
+  totalStudents: number;
+  activeSessions: number;
+  rating: number;
+  joinedDate: string; // API returns string, not Date
 }
 
 export interface RevenueChartData {
@@ -18,6 +41,7 @@ export interface RevenueChartData {
 
 export interface BreakdownItem {
   label: string;
+  name?: string; // Alternative for chart components
   count: number;
 }
 
@@ -41,6 +65,7 @@ export interface Teacher {
   specializations: string[];
   hourlyRate: number | null;
   totalStudents: number;
+  activeStudentsCount?: number; // From getTeacherStats
   rating: number;
   isAvailable: boolean;
   createdAt: string;
@@ -64,6 +89,10 @@ export interface Student {
   subscriptionStatus: 'trial' | 'active' | 'paused' | 'cancelled';
   enrolledDate: string;
   totalSessionsCompleted: number;
+  country?: string | null; // Duplicate of user.country for convenience
+  timezone?: string | null;
+  packageType?: 'foundation' | 'mastery' | 'advanced' | 'group_basic' | 'group_premium';
+  activeEnrollmentsCount?: number; // From _count
   enrollments?: Enrollment[];
 }
 
@@ -73,8 +102,12 @@ export interface Course {
   description: string;
   courseType: 'memorization' | 'islamic_studies' | 'understanding';
   durationMonths: number;
+  durationWeeks?: number; // Alternative duration unit
   priceMonthly: number;
+  basePrice?: number; // Alternative pricing
   maxStudentsPerGroup: number | null;
+  activeEnrollmentsCount?: number; // From _count
+  imageUrl?: string | null; // Course thumbnail/image
   isActive: boolean;
   createdAt: string;
 }
@@ -90,8 +123,8 @@ export interface Enrollment {
   status: 'active' | 'completed' | 'paused' | 'cancelled';
   progressPercentage: number;
   createdAt: string;
-  student?: { user: { fullName: string } };
-  course?: { title: string };
+  student?: { user: { fullName: string; email?: string } };
+  course?: { title: string; courseType?: string };
   teacher?: { user: { fullName: string } };
 }
 
@@ -100,6 +133,7 @@ export interface BookingRequest {
   fullName: string;
   email: string;
   whatsappNumber: string;
+  phone?: string; // Alias for whatsappNumber
   sex: 'male' | 'female';
   country: string;
   currentLevel: string;
@@ -112,6 +146,7 @@ export interface BookingRequest {
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   zoomLink: string | null;
   assignedTo?: { user: { fullName: string } } | null;
+  assignedTeacher?: { user: { fullName: string } } | null; // Alternative name
   createdAt: string;
 }
 
@@ -123,6 +158,7 @@ export interface ProfileChange {
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
   requestedAt: string;
+  createdAt: string; // Added
   reviewedAt: string | null;
   reviewedById: string | null;
   adminNotes: string | null;
@@ -130,6 +166,7 @@ export interface ProfileChange {
     user: {
       fullName: string;
       email: string;
+      profilePictureUrl?: string | null; // Added
     };
   };
 }
@@ -147,7 +184,10 @@ export interface Payment {
   receiptUrl: string | null;
   createdAt: string;
   student?: { user: { fullName: string; email: string } };
-  enrollment?: { course: { title: string } };
+  enrollment?: {
+    course: { title: string };
+    student?: { user: { fullName: string; email?: string } };
+  };
 }
 
 export interface PaginatedResponse<T> {

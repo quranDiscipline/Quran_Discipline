@@ -11,7 +11,11 @@ export const bookingRequestsKeys = {
   detail: (id: string) => [...bookingRequestsKeys.details(), id] as const,
 };
 
-export const useBookingRequests = (params?: { page?: number; limit?: number; status?: string }) => {
+export const useBookingRequests = (params?: {
+  page?: number;
+  limit?: number;
+  status?: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+}) => {
   return useQuery<PaginatedResponse<BookingRequest>>({
     queryKey: bookingRequestsKeys.list(params || {}),
     queryFn: () => bookingService.findAll(params),

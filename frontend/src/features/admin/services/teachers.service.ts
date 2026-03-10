@@ -32,6 +32,7 @@ export const teachersService = {
     whatsappNumber?: string;
     country?: string;
     hourlyRate?: number;
+    profilePictureUrl?: string;
   }): Promise<Teacher> {
     const { data } = await api.post('/admin/teachers', dto);
     return data.data;
@@ -56,7 +57,21 @@ export const teachersService = {
     await api.patch(`/admin/teachers/${id}/deactivate`);
   },
 
-  async getStats(id: string): Promise<{
+  async activate(id: string): Promise<void> {
+    await api.patch(`/admin/teachers/${id}/activate`);
+  },
+
+  async getStats(): Promise<{
+    total: number;
+    available: number;
+    unavailable: number;
+    bySpecialization: Record<string, number>;
+  }> {
+    const { data } = await api.get('/admin/teachers/stats');
+    return data.data;
+  },
+
+  async getTeacherStats(id: string): Promise<{
     totalStudents: number;
     activeSessions: number;
     rating: number;

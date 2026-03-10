@@ -99,7 +99,7 @@ export const CoursesList = () => {
         action={{
           label: 'Add Course',
           onClick: () => {/* Navigate to create */},
-          icon: <Plus className="w-4 h-4" />,
+          leftIcon: <Plus className="w-4 h-4" />,
         }}
       />
 

@@ -1,11 +1,9 @@
 import { api } from '@/lib/axios';
-import type { Course } from '../types/admin.types';
+import type { Course, PaginatedResponse } from '../types/admin.types';
 
 export const coursesService = {
-  async findAll(includeInactive = false): Promise<Course[]> {
-    const { data } = await api.get('/admin/courses', {
-      params: includeInactive ? undefined : { includeInactive: 'false' },
-    });
+  async findAll(params?: { page?: number; limit?: number; search?: string; courseType?: string }): Promise<PaginatedResponse<Course>> {
+    const { data } = await api.get('/admin/courses', { params });
     return data;
   },
 
@@ -40,5 +38,9 @@ export const coursesService = {
 
   async deactivate(id: string): Promise<void> {
     await api.patch(`/admin/courses/${id}/deactivate`);
+  },
+
+  async activate(id: string): Promise<void> {
+    await api.patch(`/admin/courses/${id}/activate`);
   },
 };

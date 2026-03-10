@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { teachersService } from '../services';
+import { teachersService, type TeacherQueryParams } from '../services';
 import type { Teacher, PaginatedResponse, TeacherStats } from '../types';
 import toast from 'react-hot-toast';
 
@@ -10,9 +10,10 @@ export const teachersKeys = {
   details: () => [...teachersKeys.all, 'detail'] as const,
   detail: (id: string) => [...teachersKeys.details(), id] as const,
   stats: () => [...teachersKeys.all, 'stats'] as const,
+  teacherStats: (id: string) => [...teachersKeys.all, 'teacherStats', id] as const,
 };
 
-export const useTeachers = (params?: { page?: number; limit?: number; search?: string; isAvailable?: boolean }) => {
+export const useTeachers = (params?: TeacherQueryParams) => {
   return useQuery<PaginatedResponse<Teacher>>({
     queryKey: teachersKeys.list(params || {}),
     queryFn: () => teachersService.findAll(params),
@@ -27,10 +28,11 @@ export const useTeacher = (id: string) => {
   });
 };
 
-export const useTeacherStats = () => {
+export const useTeacherStats = (id: string) => {
   return useQuery<TeacherStats>({
-    queryKey: teachersKeys.stats(),
-    queryFn: () => teachersService.getStats(),
+    queryKey: teachersKeys.teacherStats(id),
+    queryFn: () => teachersService.getTeacherStats(id),
+    enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -48,6 +50,7 @@ export const useCreateTeacher = () => {
       qualifications: string[];
       specializations: string[];
       hourlyRate?: number;
+      profilePictureUrl?: string;
     }) => teachersService.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teachersKeys.lists() });
@@ -65,7 +68,7 @@ export const useUpdateTeacher = () => {
   return useMutation({
     mutationFn: ({ id, ...dto }: { id: string } & Omit<Parameters<typeof teachersService.update>[1], 'id'>) =>
       teachersService.update(id, dto),
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teachersKeys.lists() });
       queryClient.invalidateQueries({ queryKey: teachersKeys.details() });
       toast.success('Teacher updated successfully');

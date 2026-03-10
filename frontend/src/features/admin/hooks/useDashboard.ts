@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '../services';
-import type { DashboardStats, RevenueChartData, StudentStats } from '../types';
+import type { DashboardStats, RevenueChartData, BreakdownItem } from '../types';
 
 export const dashboardKeys = {
   all: ['admin', 'dashboard'] as const,
@@ -27,7 +27,7 @@ export const useRevenueChart = (months: number = 6) => {
 };
 
 export const useStudentsByCountry = () => {
-  return useQuery<StudentStats[]>({
+  return useQuery<BreakdownItem[]>({
     queryKey: dashboardKeys.studentsByCountry(),
     queryFn: () => dashboardService.getStudentsByCountry(),
     staleTime: 10 * 60 * 1000,
@@ -35,7 +35,7 @@ export const useStudentsByCountry = () => {
 };
 
 export const useStudentsByPackage = () => {
-  return useQuery<StudentStats[]>({
+  return useQuery<BreakdownItem[]>({
     queryKey: dashboardKeys.studentsByPackage(),
     queryFn: () => dashboardService.getStudentsByPackage(),
     staleTime: 10 * 60 * 1000,

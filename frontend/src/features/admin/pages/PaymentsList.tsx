@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PageHeader, StatusBadge, DataTable, ConfirmModal, type Column } from '../components/shared';
+import { PageHeader, StatusBadge, DataTable, type Column } from '../components/shared';
 import { usePayments, useMarkPaymentVerified } from '../hooks';
 import type { Payment } from '../types';
 import { Eye, CheckCircle, Plus, CreditCard } from 'lucide-react';
@@ -18,8 +18,8 @@ export const PaymentsList = () => {
   const { data, isLoading } = usePayments({
     page,
     limit: 20,
-    status: statusFilter || undefined,
-    paymentMethod: methodFilter || undefined,
+    status: statusFilter as 'pending' | 'completed' | 'failed' | 'refunded' | undefined,
+    paymentMethod: methodFilter as 'paypal' | 'bank_transfer' | undefined,
   });
   const verifyMutation = useMarkPaymentVerified();
 
@@ -84,7 +84,7 @@ export const PaymentsList = () => {
         action={{
           label: 'Record Payment',
           onClick: () => {/* Navigate to create */},
-          icon: <Plus className="w-4 h-4" />,
+          leftIcon: <Plus className="w-4 h-4" />,
         }}
       />
 
@@ -186,8 +186,10 @@ export const PaymentsList = () => {
               </button>
               <button
                 onClick={() => {
-                  verifyMutation.mutate(verifyModal.payment.id);
-                  setVerifyModal({ isOpen: false, payment: null });
+                  if (verifyModal.payment) {
+                    verifyMutation.mutate({ id: verifyModal.payment.id });
+                    setVerifyModal({ isOpen: false, payment: null });
+                  }
                 }}
                 className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
               >

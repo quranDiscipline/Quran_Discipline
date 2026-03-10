@@ -34,9 +34,9 @@ export const useCreateCourse = () => {
       title: string;
       description: string;
       courseType: 'memorization' | 'islamic_studies' | 'understanding';
-      basePrice: number;
-      durationWeeks: number;
-      imageUrl?: string;
+      durationMonths: number;
+      priceMonthly: number;
+      maxStudentsPerGroup?: number;
     }) => coursesService.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: coursesKeys.lists() });
@@ -54,7 +54,7 @@ export const useUpdateCourse = () => {
   return useMutation({
     mutationFn: ({ id, ...dto }: { id: string } & Omit<Parameters<typeof coursesService.update>[1], 'id'>) =>
       coursesService.update(id, dto),
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: coursesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: coursesKeys.details() });
       toast.success('Course updated successfully');
